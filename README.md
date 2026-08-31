@@ -1,66 +1,98 @@
 # Dana Habayeb — art that tells a story
 
-Live site (GitHub Pages, deployed from branch `arena/01a0524a-art`, folder `/`):
-**https://navaira-y.github.io/art/** (root `index.html` redirects to `site/index.html`).
+Live site (GitHub Pages, branch `arena/01a058ba-art`, folder `/`):
+**https://navaira-y.github.io/art/** — the root `index.html` redirects to `site/index.html`.
 
-Catalog data (titles / prices / sold status / product links) mirrors
-`danahabayeb.art` and lives in one place: `site/js/data.js`.
+One cinematic, scroll driven page. Everything the visitor sees is real: real artworks,
+real titles, real sizes, real prices, real availability, all mirrored from
+`danahabayeb.art` and held in one file, `site/js/data.js`.
 
-## The website (`site/`)
+## Structure
 
 ```
 site/
-  index.html          page
-  css/style.css       design system (camel / warm taupe / dusty mauve / deep wine / charcoal)
-  js/data.js          catalog data + hall stills list
-  js/main.js          loader, hero, stories, traveler, gallery, lightbox
-index.html            root redirect -> site/index.html
+  index.html            the page
+  css/style.css         design system + all layout
+  js/data.js            the 15 originals, hero collage map, splash map
+  js/manifest.js        generated: asset url -> byte size (drives the real loader)
+  js/main.js            loader, score, motion, wiring
+  assets/art/*.webp     1120px masters + 380px thumbs
+  assets/fx/*.webp      paint splash mattes
+  assets/fonts/*.woff2  self hosted Cormorant / Manrope / Kaushan
+index.html              root redirect -> site/index.html
+tools/build_assets.sh   masters -> webp + splash mattes -> manifest
+tools/write_manifest.js scans site/assets -> site/js/manifest.js
 ```
 
-Experience, top to bottom:
+## The experience, in order
 
-- **Typewriter loader** — types "Art by" then "Dana Habayeb" with a blinking caret;
-  the curtain lifts only once typing is done **and** the hero images are decoded,
-  so the hero never pops in afterwards.
-- **Editorial scattered-art hero** — cream canvas, her 15 artworks floating as
-  white-framed cards in the layout traced from the reference recording, big serif
-  statement "Art That Tells / A Story", rust scribble draw-in, rotating orbit badge,
-  mouse-depth parallax, star cursor.
-- **Second section — pinned story cards** — one card per scroll step, traced from the
-  reference: the active card stands upright at the focus point while the next waits
-  tilted right and the previous exits up-left, dimmed; the left panel swaps title +
-  story per card, and the background fades from near-black to #6D88A4 once the first
-  card is placed.
-- **Traveling artwork** — *Pali Pika* leaves its hero slot, flies into the first story-card
-  slot, rides the horizontal drift, then lands on its own tile in the Collection
-  (coffee-cup style hand-off between sections).
-- **The Hall** — photoreal stills of the walkthrough in walking order, snap-scroll strip.
-- **Collection** — the 15 real originals with prices/sold status, hover zoom,
-  lightbox deep-linking to the Shopify products.
-- Marquee band, film grain, commission CTA, reduced-motion support.
+1. **Loading screen.** Her name types out under a real progress bar with a numeric
+   percentage. Progress is measured, not faked: six workers stream every asset in
+   `manifest.js` and report bytes received (0 to 86%), then every artwork is decoded
+   with `img.decode()` (86 to 96%), then the fonts resolve (96 to 100%). The curtain
+   only lifts at 100%, so nothing pops in and nothing shifts afterwards.
+2. **Hero.** The beige canvas, `#F1E9E4`, with the fifteen originals scattered as
+   white framed prints around the statement *Art that tells a story.* This beige is
+   the reference colour for the loader, the second section and the circle.
+3. **Second section.** Same beige. The five chapter artworks travel through the frame
+   one at a time on a 3D path, growing from far away, passing the camera and exiting
+   past the viewer's shoulder. Nothing stacks and nothing collects; each card fully
+   leaves before the next arrives, and the last one holds at the focus point.
+4. **Circle transition.** Once every card has passed, the room dims and a solid beige
+   circle grows from the centre until it owns the viewport. The second section stays
+   pinned exactly where it is; the circle is the portal, not a scroll.
+5. **Paint splashes.** Eight hand painted mattes are revealed around the edges with a
+   growing `clip-path` circle, each one throwing inward and settling. Real paint
+   texture, no particles, no glow.
+6. **Circular gallery.** The splashes are pulled outward by an iris that opens onto a
+   dark hall. Scrolling rotates a circular installation: each artwork swings in from
+   the ring with perspective, depth, scale and rotation, and the focus position lands
+   at z = 0 so the front piece is always pin sharp. A reflection sits under it, a dial
+   tracks progress, and the caption cross fades. Pinned until all fifteen have shown.
+7. **About.** A red circle opens over the hall and becomes the About section: her real
+   line, *Just a kid who still thinks they can change the world*, the real bio, the
+   real commission, shipping and workshop offerings.
+8. **Footer.** Nothing after it.
 
-Serve locally from the repo root (media paths are root-relative):
+Scroll is smoothed with an exponential follow, so the whole score is driven by one
+interpolated value; every animated property is `transform`, `opacity` or `clip-path`.
+Layout is measured once per resize, never per frame.
+
+### Responsive and accessibility
+
+Below 760px the hero collage switches to a dedicated map that keeps the middle band
+clear for the headline, the travelling cards grow to 64vw, and the gallery ring tightens
+its radius so neighbours frame the focus instead of leaving the centre empty. With
+`prefers-reduced-motion: reduce` the score is cut to 45% of its length, entrance
+animations and swap animations are disabled, and the hero collage is simply present.
+
+## Rebuilding the assets
+
+```bash
+bash tools/build_assets.sh     # requires ImageMagick + cwebp
+```
+
+Masters live at the repo root (`image-*.png`, `*.webp`); the splash masters live in
+`tools/fx-src/`. The script writes `site/assets/art`, `site/assets/fx` and regenerates
+`site/js/manifest.js`. **Any change under `site/assets/` needs the manifest regenerated**
+or the loader will not know about the file.
+
+Serve the deployed layout locally from the repo root:
 
 ```bash
 python3 -m http.server 8080 --bind 0.0.0.0
 ```
 
-## Walkthrough archive (keyframes + pipeline)
+## Artwork to file map
 
-The hall was rendered as **one continuous camera take** (no cuts) — left wall artworks
-1–7, front wall, right wall past the stairs, ending at the gate. The encoded mp4s were
-removed from the repo by design; the AI keyframes remain in `keyframes/` (used by
-*The Hall*) and the deterministic offline renderer remains in `tools/`:
+image-9 There is Always Hope · image-7 The Source · 3.webp From the Land ·
+image-8 Do You Have No Shame · 2.webp Sheikh Pika · image-3 Monkey D. Luffy ·
+image-1 Dune Buggy Bashing · image-6 The World is Watching · image-10 This is Your God ·
+image-11 Van Gogh Pikachu · image-2 DXB Pika · image-4 Pali Pika ·
+image-5 Mini Sheikh Pika · 1.webp Desert Companion · 4.webp Desert Dune Bashing.
 
-1. `tools/prep_textures.py` — frames around each artwork, procedural marble floor, gate texture.
-2. `tools/walk.py` — numpy software rasterizer: perspective-correct projection, z-buffer,
-   spot lighting, planar floor reflection, fog, vignette, filmic tonemap, Catmull-Rom
-   camera + gaze splines with head-bob.
+## Archive
 
-Artwork → wall order used by the take:
-image-9, image-7, 3.webp, image-8, 2.webp, image-3, image-1 (left) ·
-image-6 (front) · image-10, image-11, image-2, image-4, image-5, 1.webp, 4.webp (right).
-
-`VIDEO_PROMPT_PACK.md` + `PROMPT_*.md` hold the Seedance 2.5 prompt pack for regenerating
-the take as AI video from the `keyframes/` references. `refrence.mp4` is the style
-reference provided with the project.
+`keyframes/`, `tools/prep_textures.py`, `tools/walk.py`, `VIDEO_PROMPT_PACK.md` and
+`PROMPT_*.md` are from the earlier gallery walkthrough render and are no longer used by
+the page. `refrence.mp4` is the style reference supplied with the project.

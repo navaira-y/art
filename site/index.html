@@ -2,125 +2,143 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Dana Habayeb — Art that tells a story</title>
-<meta name="description" content="Original acrylic works by Dana Habayeb. Pop icons, homeland memories, desert nights — painted to be felt.">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Manrope:wght@300;400;500;600;700&family=Kaushan+Script&display=swap" rel="stylesheet">
+<meta name="description" content="Original acrylic paintings by Dana Habayeb. Pop icons, homeland memory and the desert, painted to be felt. Free worldwide shipping, certificate of authenticity included.">
+<meta name="theme-color" content="#F1E9E4">
+<link rel="preload" as="font" type="font/woff2" href="assets/fonts/kaushan-400.woff2" crossorigin>
+<link rel="preload" as="font" type="font/woff2" href="assets/fonts/cormorant-400.woff2" crossorigin>
+<link rel="preload" as="font" type="font/woff2" href="assets/fonts/cormorant-400-italic.woff2" crossorigin>
+<link rel="preload" as="font" type="font/woff2" href="assets/fonts/manrope-var.woff2" crossorigin>
 <link rel="stylesheet" href="css/style.css">
 </head>
-<body>
+<body class="pre">
 
-<!-- TYPEWRITER LOADER — types the brand while hero images decode -->
-<div id="loader">
-  <div class="type-wrap">
-    <p class="type-line t1"><span id="typeL1"></span><i class="caret" id="caret1"></i></p>
-    <p class="type-line t2"><span id="typeL2"></span><i class="caret off" id="caret2"></i></p>
+<!-- ─────────────────────────  LOADING SCREEN  ───────────────────────── -->
+<div id="loader" role="status" aria-live="polite">
+  <div class="ld-inner">
+    <p class="ld-mark"><span id="ldType"></span><i class="ld-caret" id="ldCaret"></i></p>
+    <div class="ld-bar"><span id="ldFill"></span></div>
+    <div class="ld-foot">
+      <span class="ld-note" id="ldNote">Loading the collection</span>
+      <span class="ld-pct"><b id="ldPct">0</b>%</span>
+    </div>
   </div>
 </div>
 
 <div class="grain" aria-hidden="true"></div>
 
 <header id="nav">
-  <a class="brand" href="#top">
-    <img src="assets/logo.png" alt="Dana Habayeb" class="brand-logo"
-         onerror="this.style.display='none';this.nextElementSibling.style.display='inline'">
-    <span class="brand-word" style="display:none">Dana Habayeb</span>
-  </a>
+  <a class="brand" href="#top" data-jump="top"><span>Dana Habayeb</span></a>
   <nav class="links">
-    <a href="#stories">Stories</a>
-    <a href="#hall">The Hall</a>
-    <a href="#collection">Collection</a>
-    <a href="#about">About</a>
-    <a href="#commission" class="btn-accent">Commission</a>
+    <a href="#stories" data-jump="stories">Stories</a>
+    <a href="#gallery" data-jump="gallery">Gallery</a>
+    <a href="#about" data-jump="about">About</a>
+    <a class="shop" href="https://danahabayeb.art/collections/all" target="_blank" rel="noopener">Shop</a>
   </nav>
 </header>
 
 <main id="top">
 
-  <!-- EDITORIAL SCATTERED-ART HERO -->
-  <section class="hero">
+  <!-- ─────────────────────────  ACT I — HERO  ───────────────────────── -->
+  <section class="hero" id="hero">
     <div class="scatter" id="scatter" aria-hidden="true"></div>
     <div class="hero-center">
-      <h1 class="hero-head reveal-lines" aria-label="Art that tells a story">
+      <h1 class="hero-head" aria-label="Art that tells a story">
         <span><i>Art that tells</i></span>
         <span><i>a story.</i></span>
       </h1>
-      <p class="hero-micro reveal">&amp; painted to be felt</p>
+      <p class="hero-micro">Original acrylics · Dana Habayeb</p>
     </div>
     <svg class="scribble" viewBox="0 0 260 120" aria-hidden="true">
       <path id="scribblePath" d="M6 18 C 60 2, 96 30, 148 22 C 190 16, 196 44, 178 52 C 160 60, 158 34, 190 40 C 216 46, 208 84, 226 108"
         fill="none" stroke="#C7502B" stroke-width="2.5" stroke-linecap="round"/>
     </svg>
+    <div class="hero-cue" aria-hidden="true"><span></span>Scroll</div>
   </section>
 
-  <!-- the traveling artwork: hero → stories → its place in the collection -->
-  <figure class="traveler" id="traveler" aria-hidden="true"><img src="../image-4.png" alt=""></figure>
+  <!-- ───────  ACT II → IV — one pinned stage: cards · circle · paint · hall  ─────── -->
+  <section id="journey" aria-label="The collection">
+    <div class="stage" id="stage">
 
-  <!-- SECOND SECTION — pinned, scroll-driven story cards -->
-  <section id="stories" aria-label="Stories behind the paintings">
-    <div class="stories-sticky">
-      <div class="story-info">
-        <h3 id="storyTitle">Pali Pika</h3>
-        <p id="storyBody"></p>
+      <!-- III / IV : the circular hall, revealed through the iris -->
+      <div class="layer hall" id="hall" aria-hidden="true">
+        <div class="hall-room">
+          <div class="room-wall"></div>
+          <div class="room-glow"></div>
+          <div class="room-floor"></div>
+          <div class="room-pool"></div>
+        </div>
+        <div class="hall-head">
+          <p class="eyebrow">Fifteen originals</p>
+          <h2>Art Gallery</h2>
+        </div>
+        <div class="ring-wrap"><div class="ring" id="ring"></div></div>
+        <figure class="echo" id="echo" aria-hidden="true"><img alt=""></figure>
+        <div class="hall-cap" id="hallCap">
+          <span class="hc-idx"><b id="hcNum">01</b><i>/ 15</i></span>
+          <h3 id="hcTitle"></h3>
+          <p id="hcLine"></p>
+          <p class="hc-meta" id="hcMeta"></p>
+        </div>
+        <a class="hall-link" id="hallLink" target="_blank" rel="noopener">View on danahabayeb.art</a>
+        <svg class="dial" viewBox="0 0 120 120" aria-hidden="true">
+          <circle class="dial-t" cx="60" cy="60" r="54"></circle>
+          <circle class="dial-p" id="dialP" cx="60" cy="60" r="54"></circle>
+        </svg>
       </div>
-      <div class="story-stack" id="storyStack"></div>
+
+      <!-- II : the second act, on the exact hero beige -->
+      <div class="layer act2" id="act2">
+        <div class="a2-plate" id="a2Plate">
+          <h2 class="a2-word" id="a2Word" aria-hidden="true"></h2>
+          <div class="a2-cards" id="a2Cards"></div>
+        </div>
+        <div class="a2-meta" id="a2Meta">
+          <span class="a2-idx"><b id="a2Num">01</b><i>/ 05</i></span>
+          <h3 id="a2Title"></h3>
+          <p id="a2Line"></p>
+        </div>
+        <p class="a2-rail" aria-hidden="true">Stories behind the paintings</p>
+        <div class="a2-scrim" id="a2Scrim"></div>
+      </div>
+
+      <!-- the beige circle: opens over the second act, then irises into the hall -->
+      <div class="veil" id="veil"></div>
+
+      <!-- the paint -->
+      <div class="paint" id="paint" aria-hidden="true"></div>
+
+      <!-- the red that becomes the About section -->
+      <div class="redveil" id="redveil"></div>
     </div>
   </section>
 
-  <div class="marquee" aria-hidden="true"><div class="marquee-track">
-    <span>Art that tells a story · </span><span>painted to be felt · </span><span>fifteen originals · one hall · one take · </span>
-    <span>Art that tells a story · </span><span>painted to be felt · </span><span>fifteen originals · one hall · one take · </span>
-  </div></div>
-
-  <!-- THE HALL -->
-  <section id="hall" class="hall">
-    <div class="sec-head">
-      <p class="eyebrow reveal">Inside the hall</p>
-      <h2 class="reveal">The gallery, as you walked it</h2>
-      <p class="sec-sub reveal">Stills from the hall in walking order. Hover to lean closer — every frame is one continuous take.</p>
-    </div>
-    <div class="hall-track" id="hallTrack"></div>
-  </section>
-
-  <!-- COLLECTION -->
-  <section id="collection" class="collection">
-    <div class="sec-head">
-      <p class="eyebrow reveal">The Collection</p>
-      <h2 class="reveal">Fifteen originals. One story each.</h2>
-      <p class="sec-sub reveal">Click any piece to step closer — each one ships with its story and a certificate of authenticity.</p>
-    </div>
-    <div class="grid" id="grid"></div>
-  </section>
-
-  <!-- ABOUT -->
+  <!-- ─────────────────────────  ACT V — ABOUT  ───────────────────────── -->
   <section id="about" class="about">
-    <div class="about-inner">
-      <p class="eyebrow reveal">The Artist</p>
-      <blockquote class="reveal">“I paint the moment you recognise yourself in a picture.”</blockquote>
-      <p class="about-copy reveal">Dana Habayeb is a young artist painting what we all carry — the icons that raised us,
-      the land we miss, the people who made us. Pikachu rests under olive trees. Heroes laugh inside Van Gogh skies.
-      Dunes run like weekends that never end. Her acrylics are thick, swirling and unapologetically personal —
-      made for that jolt of <em>this is mine, this is me</em>. If your story isn’t on these walls yet, she’ll paint it.</p>
-      <div class="stats reveal">
-        <div><strong>15</strong><span>originals in the hall</span></div>
-        <div><strong>9</strong><span>already collected</span></div>
-        <div><strong>1</strong><span>continuous take</span></div>
+    <div class="ab-grid">
+      <div class="ab-left">
+        <p class="eyebrow">The artist</p>
+        <blockquote>Just a kid who still<br>thinks they can<br>change the world.</blockquote>
       </div>
-    </div>
-  </section>
-
-  <!-- COMMISSION -->
-  <section id="commission" class="commission">
-    <div class="commission-inner reveal">
-      <p class="eyebrow">Commissions open</p>
-      <h2>Your story belongs on a wall.</h2>
-      <p>The icon that raised you. The land you carry. The person you miss.<br>
-      One original, painted in swirling acrylic — unmistakably yours, delivered worldwide.</p>
-      <div class="cta-row">
-        <a class="btn-accent big" href="https://danahabayeb.art/pages/contact" target="_blank" rel="noopener">Request a commission</a>
-        <a class="btn-ghost big" href="https://danahabayeb.art/collections/all" target="_blank" rel="noopener">Shop the originals</a>
+      <div class="ab-right">
+        <p class="ab-lead">Dana Habayeb paints in acrylic from the UAE.</p>
+        <p>Pop icons, homeland memory and the desert land on the same deep edge canvas.
+        Banksy's girl with the balloon leads KAWS toward a free Palestine. Pikachu sits
+        in a keffiyeh under the olive trees. A Bedouin lives inside a horse's eye.
+        The work is thick, swirling and personal, made for the moment you recognise
+        yourself inside a picture.</p>
+        <p>Every original is signed, arrives ready to hang and ships worldwide with a
+        certificate of authenticity.</p>
+        <ul class="ab-list">
+          <li><b>Commissions</b><span>Fine art and murals</span></li>
+          <li><b>Shipping</b><span>Worldwide, tell her where you are</span></li>
+          <li><b>Events</b><span>Host a painting workshop</span></li>
+        </ul>
+        <div class="ab-cta">
+          <a class="btn" href="https://danahabayeb.art/pages/contact" target="_blank" rel="noopener">Request a commission</a>
+          <a class="btn ghost" href="https://danahabayeb.art/collections/all" target="_blank" rel="noopener">Shop the originals</a>
+        </div>
       </div>
     </div>
   </section>
@@ -129,19 +147,16 @@
 
 <footer>
   <div class="foot-inner">
-    <span>© <span id="yr"></span> Dana Habayeb</span>
-    <span class="foot-mid">Art that tells a story.</span>
-    <a href="https://danahabayeb.art/" target="_blank" rel="noopener">danahabayeb.art</a>
+    <span class="f-brand">Dana Habayeb</span>
+    <span class="f-mid">Art that tells a story.</span>
+    <span class="f-right">
+      <a href="https://danahabayeb.art/" target="_blank" rel="noopener">danahabayeb.art</a>
+      <i>© <span id="yr"></span></i>
+    </span>
   </div>
 </footer>
 
-<div id="lightbox" hidden>
-  <button class="lb-close" aria-label="Close">✕</button>
-  <figure><img id="lbImg" alt=""><figcaption>
-    <h3 id="lbTitle"></h3><p id="lbMeta"></p><a id="lbLink" class="btn-accent" target="_blank" rel="noopener">View on danahabayeb.art</a>
-  </figcaption></figure>
-</div>
-
+<script src="js/manifest.js"></script>
 <script src="js/data.js"></script>
 <script src="js/main.js"></script>
 </body>
