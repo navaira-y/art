@@ -14,15 +14,15 @@ site/
   css/style.css       design system (camel / warm taupe / dusty mauve / deep wine / charcoal)
   js/data.js          catalog data + hall stills list
   js/main.js          loader, hero, stories, traveler, gallery, lightbox
-  assets/brush.mp4    realistic brush loader clip (trimmed from loading.mp4)
 index.html            root redirect -> site/index.html
 ```
 
 Experience, top to bottom:
 
-- **Realistic brush loader** — the provided painted clip (`loading.mp4` on `main`),
-  trimmed so it starts exactly when the brush begins writing "Art by Dana Habayeb";
-  the curtain lifts when the signature finishes.
+- **Realistic brush loader** — a hand-built brush (wood / ferrule / bristle gradients)
+  descends and writes "Art by" then "Dana Habayeb" in script, choreographed after the
+  `loading.mp4` reference clip; the curtain lifts only once the writing is done **and**
+  the hero images are decoded, so the hero never pops in afterwards.
 - **Editorial scattered-art hero** — cream canvas, her 15 artworks floating as
   white-framed cards in the layout traced from the reference recording, big serif
   statement "Art That Tells / A Story", rust scribble draw-in, rotating orbit badge,

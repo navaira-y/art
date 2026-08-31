@@ -7,20 +7,70 @@ const ease = t => t * t * (3 - 2 * t);
 const lerp = (a, b, t) => a + (b - a) * t;
 const byTitle = t => ART.find(a => a.t === t);
 
-/* ---------- realistic brush loader (trimmed painted clip) ---------- */
+/* ---------- realistic brush loader, choreographed after the reference clip ----------
+   descend -> write "Art by" -> carry -> write "Dana Habayeb" -> lift.
+   The curtain only lifts once the writing is done AND the hero images are decoded,
+   so the hero never pops in after the loader. */
+let heroImgsReady = false;
 (function () {
-  const loader = $("#loader"), vid = $("#loaderVid");
-  if (!loader || !vid) return;
+  const loader = $("#loader");
+  if (!loader) return;
+  const brush = $("#ldBrush"), shadow = $("#ldShadow"), t1 = $("#ldT1"), t2 = $("#ldT2");
+  const stage = $(".ld-stage");
   let finished = false;
   const finish = () => {
     if (finished) return; finished = true;
     loader.classList.add("done");
     document.body.classList.add("loaded");
   };
-  vid.addEventListener("ended", finish);
-  vid.addEventListener("error", finish);
-  try { const pr = vid.play(); if (pr && pr.catch) pr.catch(() => {}); } catch (e) {}
-  setTimeout(finish, 12000);
+  setTimeout(finish, 14000);
+
+  const imgs = $$("#scatter img");
+  if (imgs.length) {
+    Promise.allSettled(imgs.map(im => im.decode ? im.decode() : Promise.resolve()))
+      .then(() => { heroImgsReady = true; });
+  } else heroImgsReady = true;
+  setTimeout(() => { heroImgsReady = true; }, 6000);
+
+  let start = null;
+  function tick(ts) {
+    if (finished) return;
+    if (start === null) start = ts;
+    const t = (ts - start) / 1000;
+    const S = stage.offsetWidth;
+    const w1 = t1.offsetWidth, w2 = t2.offsetWidth;
+    const a1 = (S - w1) / 2, a2 = (S - w2) / 2;
+    const y1 = t1.offsetTop + t1.offsetHeight * 0.92;
+    const y2 = t2.offsetTop + t2.offsetHeight * 0.92;
+    /* default = lifted-away end state (held while we wait for hero images) */
+    let bx = a2 + w2 + 12, by = y2 - 150, c1 = 1, c2 = 1, shO = 0, rot = 7, op = 0;
+    if (t < 0.5) {                 /* descend */
+      const q = ease(t / 0.5);
+      bx = a1; by = y1 - 150 * (1 - q); shO = .32 * q; op = q;
+    } else if (t < 1.7) {          /* write "Art by" */
+      const q = (t - 0.5) / 1.2;
+      c1 = q; bx = a1 + q * w1; by = y1 + Math.sin(q * 42) * 1.6; shO = .32;
+    } else if (t < 2.1) {          /* carry to the name */
+      const q = ease((t - 1.7) / 0.4);
+      c1 = 1; bx = lerp(a1 + w1, a2, q); by = lerp(y1, y2, q) - Math.sin(q * Math.PI) * 34;
+      shO = .32 - .2 * Math.sin(q * Math.PI);
+    } else if (t < 4.0) {          /* write "Dana Habayeb" */
+      const q = (t - 2.1) / 1.9;
+      c2 = q; bx = a2 + q * w2; by = y2 + Math.sin(q * 56) * 1.8; shO = .32;
+    } else if (t < 4.6) {          /* lift away */
+      const q = ease((t - 4.0) / 0.6);
+      c2 = 1; bx = a2 + w2 + 12 * q; by = y2 - 150 * q; shO = .32 * (1 - q); op = 1 - q;
+    } else if (heroImgsReady) { finish(); return; }
+    t1.style.clipPath = `inset(-30% ${(100 - c1 * 100).toFixed(1)}% -30% -5%)`;
+    t2.style.clipPath = `inset(-30% ${(100 - c2 * 100).toFixed(1)}% -30% -5%)`;
+    brush.style.opacity = op.toFixed(2);
+    brush.style.transform = `translate(${(bx - 32).toFixed(1)}px, ${(by - 200).toFixed(1)}px) rotate(${rot}deg)`;
+    shadow.style.opacity = shO.toFixed(2);
+    shadow.style.transform = `translate(${(bx - 37).toFixed(1)}px, ${(by - 6).toFixed(1)}px)`;
+    requestAnimationFrame(tick);
+  }
+  const boot = () => requestAnimationFrame(tick);
+  (document.fonts && document.fonts.ready) ? document.fonts.ready.then(boot) : boot();
 })();
 
 /* ---------- nav / year ---------- */
@@ -52,6 +102,7 @@ let heroSlot = null;
     f.style.setProperty("--y", p[1] + "%");
     f.style.setProperty("--w", p[2] + "px");
     f.style.setProperty("--d", (-i * 0.7) + "s");
+    f.style.setProperty("--fd", (0.15 + i * 0.06) + "s");
     f.dataset.depth = 14 + (i % 4) * 6;
     f.innerHTML = `<img src="../${a.f}" alt="">` + (p[3] && !isTrav ? `<figcaption>— ${a.t}</figcaption>` : "");
     scatter.appendChild(f);
@@ -152,6 +203,7 @@ $$(".reveal, .hall-item").forEach(el => io.observe(el));
 
 /* ---------- master motion loop: parallax, stories pin, traveling artwork, cursor ---------- */
 const traveler = $("#traveler");
+let travRot = 0, travScale = 1;
 const cards = scatter ? [...scatter.children] : [];
 let mx = 0, my = 0, cx = 0, cy = 0;
 addEventListener("mousemove", e => {
@@ -186,7 +238,7 @@ measure();
     const p = clamp01(-r.top / (storiesSec.offsetHeight - vh));
     stack.style.transform = `translateY(-50%) translate3d(${(-p * travel).toFixed(1)}px,0,0)`;
     ghost.style.opacity = clamp01((p - 0.12) * 2.4).toFixed(2);
-    const focus = innerWidth * 0.45;
+    const focus = innerWidth * 0.32;
     let best = 0, bd = 1e9;
     [...stack.children].forEach((c, i) => {
       const d = Math.abs(c.offsetLeft - p * travel + c.offsetWidth / 2 - focus);
@@ -194,6 +246,7 @@ measure();
     });
     if (best !== activeStory) {
       activeStory = best;
+      [...stack.children].forEach((c, i) => c.classList.toggle("active", i === best));
       const t = STORIES[best].a.t;
       sTitle.textContent = t;
       sBody.textContent = STORY_COPY[t];
@@ -210,11 +263,13 @@ measure();
     const r3 = travPh.getBoundingClientRect();
     const p12 = ease(clamp01((vh - r2.top) / (vh * 0.6)));
     const p23 = ease(clamp01((vh * 1.05 - r3.top) / (vh * 0.75)));
+    travRot += ((activeStory === 0 ? 0 : STORIES[0].r) - travRot) * 0.1;
+    travScale += ((activeStory === 0 ? 1 : 0.9) - travScale) * 0.1;
     const x = lerp(lerp(r1.left, r2.left, p12), r3.left, p23);
     const y = lerp(lerp(r1.top, r2.top, p12), r3.top, p23);
-    const w = lerp(lerp(r1.width, r2.width, p12), r3.width, p23);
-    const h = lerp(lerp(r1.height, r2.height, p12), r3.height, p23);
-    const rot = lerp(lerp(0, -6, p12), 0, p23);
+    const w = lerp(lerp(r1.width, r2.width * travScale, p12), r3.width, p23);
+    const h = lerp(lerp(r1.height, r2.height * travScale, p12), r3.height, p23);
+    const rot = lerp(lerp(0, travRot, p12), 0, p23);
     const landed = p23 > 0.995;
     traveler.style.visibility = landed ? "hidden" : "visible";
     traveler.style.transform = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px) rotate(${rot.toFixed(2)}deg)`;
