@@ -1,269 +1,665 @@
-/* Dana Habayeb — main.js : typewriter loader, scattered hero, one-by-one story cards, traveling artwork */
+/* ============================================================================
+   Dana Habayeb — main.js
+   One pinned stage carries the whole middle of the site:
+     travelling artworks  →  beige circle  →  paint  →  iris  →  circular hall
+   Everything is driven by a single smoothed scroll position, so the motion
+   lags the wheel just enough to feel like weight rather than a slideshow.
+   ========================================================================== */
 "use strict";
-const $ = (s, c = document) => c.querySelector(s);
+
+/* ───────────────────────────── helpers ───────────────────────────── */
+const $  = (s, c = document) => c.querySelector(s);
 const $$ = (s, c = document) => [...c.querySelectorAll(s)];
-const clamp01 = v => Math.max(0, Math.min(1, v));
-const ease = t => t * t * (3 - 2 * t);
+const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
+const clamp01 = v => clamp(v, 0, 1);
 const lerp = (a, b, t) => a + (b - a) * t;
-const byTitle = t => ART.find(a => a.t === t);
+const easeOut = t => 1 - Math.pow(1 - t, 3);
+const easeIn = t => t * t * t;
+const easeInOut = t => (t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+const smoothstep = t => t * t * (3 - 2 * t);
+const pad2 = n => (n < 10 ? "0" : "") + n;
 
-/* ---------- typewriter loader: "Art by" / "Dana Habayeb", hero images decode meanwhile ---------- */
-let heroImgsReady = false;
-(function () {
-  const loader = $("#loader");
-  if (!loader) return;
-  const s1 = $("#typeL1"), s2 = $("#typeL2"), c1 = $("#caret1"), c2 = $("#caret2");
-  const T1 = "Art by", T2 = "Dana Habayeb";
-  let finished = false;
-  const finish = () => {
-    if (finished) return; finished = true;
-    loader.classList.add("done");
-    document.body.classList.add("loaded");
-  };
-  setTimeout(finish, 12000);
+const REDUCED = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const MDIM = Object.fromEntries(MANIFEST.map(e => [e[0], { w: e[2], h: e[3] }]));
+const dimOf = k => MDIM[k] || { w: 4, h: 5 };
 
-  const imgs = $$("#scatter img");
-  if (imgs.length) {
-    Promise.allSettled(imgs.map(im => im.decode ? im.decode() : Promise.resolve()))
-      .then(() => { heroImgsReady = true; });
-  } else heroImgsReady = true;
-  setTimeout(() => { heroImgsReady = true; }, 6000);
+if ("scrollRestoration" in history) history.scrollRestoration = "manual";
 
-  let start = null;
-  function tick(ts) {
-    if (finished) return;
-    if (start === null) start = ts;
-    const t = (ts - start) / 1000;
-    const n1 = Math.max(0, Math.min(T1.length, Math.floor((t - 0.35) / 0.09)));
-    const n2 = Math.max(0, Math.min(T2.length, Math.floor((t - 1.25) / 0.1)));
-    s1.textContent = T1.slice(0, n1);
-    s2.textContent = T2.slice(0, n2);
-    c1.classList.toggle("off", n2 > 0);
-    c2.classList.toggle("off", t < 1.15);
-    if (n2 === T2.length && t > 1.25 + T2.length * 0.1 + 0.55 && heroImgsReady) { finish(); return; }
-    requestAnimationFrame(tick);
-  }
-  requestAnimationFrame(tick);
-})();
+/* ══════════════════════════════════════════════════════════════════
+   1 · DOM CONSTRUCTION  (images stay empty until the loader has them)
+   ══════════════════════════════════════════════════════════════════ */
+const artKey  = a => ART_DIR + a.id + ".webp";
+const thumbKey = a => ART_DIR + a.id + "-s.webp";
 
-/* ---------- nav / year ---------- */
-const nav = $("#nav");
-addEventListener("scroll", () => nav.classList.toggle("scrolled", scrollY > 40), { passive: true });
-$("#yr").textContent = new Date().getFullYear();
-
-/* ---------- scattered-art hero (layout traced from the reference recording) ---------- */
-const TRAV = byTitle("Pali Pika");
-const SLOTS = [
-  [1, 16, 64], [29, 8, 100], [70, 10, 104, "cap"], [94, 15, 110],
-  [17.5, 26, 112],                       /* <- traveling artwork lives here in the hero */
-  [37, 36, 88], [60, 31, 94], [81, 35, 88],
-  [98, 48, 56], [3, 44, 26], [13, 68, 88], [0.5, 74, 40],
-  [6, 96, 88], [50, 96, 88], [89, 91, 108, "cap"],
-];
+/* ── hero scatter ── */
 const scatter = $("#scatter");
-let heroSlot = null;
-(function buildScatter() {
-  if (!scatter) return;
-  const pool = ART.filter(a => a !== TRAV);
-  let pi = 0;
-  SLOTS.forEach((p, i) => {
-    const isTrav = i === 4;
-    const a = isTrav ? TRAV : pool[pi++ % pool.length];
-    const f = document.createElement("figure");
-    f.className = isTrav ? "slot" : "";
-    f.style.setProperty("--x", p[0] + "%");
-    f.style.setProperty("--y", p[1] + "%");
-    f.style.setProperty("--w", p[2] + "px");
-    f.style.setProperty("--d", (-i * 0.7) + "s");
-    f.style.setProperty("--fd", (0.15 + i * 0.06) + "s");
-    f.dataset.depth = 14 + (i % 4) * 6;
-    f.innerHTML = `<img src="../${a.f}" alt="">` + (p[3] && !isTrav ? `<figcaption>— ${a.t}</figcaption>` : "");
-    scatter.appendChild(f);
-    if (isTrav) heroSlot = f;
-  });
-})();
-
-/* ---------- second section: pinned, one-by-one cards (traced frame-by-frame) ---------- */
-const STORIES = [
-  { a: TRAV },
-  { a: byTitle("Van Gogh Pikachu") },
-  { a: byTitle("There is Always Hope") },
-  { a: byTitle("The Source") },
-  { a: byTitle("Sheikh Pika") },
-];
-const STORY_COPY = {
-  "Pali Pika": "Pikachu rests under olive trees — a pop icon sitting quietly inside a homeland memory. Painted in dusty greens and mauve for everyone who carries a land they have never stopped missing.",
-  "Van Gogh Pikachu": "Her favourite hero, let loose inside a swirling Van Gogh sky. Thick acrylic, moving light — the night she paints is one you have felt before.",
-  "There is Always Hope": "A balloon, a child, a promise that refuses to pop. The piece collectors ask about first — and the one that started every conversation her work still has.",
-  "The Source": "Where everything comes from and where it goes back to. Layer on layer of camel and wine, painted until the canvas holds its own gravity.",
-  "Sheikh Pika": "Pika visits Dubai — keffiyeh, skyline and all. A love letter to the city she grows up in, painted with a straight face and a wink.",
-};
-/* choreography knots, keyed by d = cardIndex - progress (one card per scroll step):
-   active upright at focus; next waiting tilted right; previous exiting up-left dimmed */
-const K_X = [-26, -22, 0, 21, 40, 58];      /* vw */
-const K_Y = [-16, -12, 0, 3, 5, 6];         /* vh */
-const K_R = [-14, -12, 0, 10, 12, 13];      /* deg */
-const K_S = [0.84, 0.9, 1, 0.94, 0.9, 0.88];
-const K_B = [0.25, 0.4, 1, 0.55, 0.4, 0.3];
-function knot(arr, d) {
-  const x = Math.max(0, Math.min(arr.length - 1.001, d + 2));
-  const i = Math.floor(x), f = x - i;
-  return arr[i] + (arr[i + 1] - arr[i]) * f;
-}
-const storiesSec = $("#stories");
-const stack = $("#storyStack");
-const infoBox = $(".story-info");
-const sTitle = $("#storyTitle");
-const sBody = $("#storyBody");
-let storySlot = null, activeStory = -1;
-(function buildStories() {
-  if (!stack) return;
-  STORIES.forEach((s, i) => {
-    if (i === 0) {
-      storySlot = document.createElement("div");
-      storySlot.className = "story-slot";
-      stack.appendChild(storySlot);
-      return;
-    }
-    const c = document.createElement("figure");
-    c.className = "story-card";
-    c.innerHTML = `<img src="../${s.a.f}" alt="${s.a.t}"><b>${s.a.t}</b>`;
-    stack.appendChild(c);
-  });
-  sTitle.textContent = STORIES[0].a.t;
-  sBody.textContent = STORY_COPY[STORIES[0].a.t];
-})();
-
-/* ---------- collection grid + hall + lightbox ---------- */
-const grid = $("#grid");
-ART.forEach(a => {
-  const card = document.createElement("article");
-  card.className = "card" + (a === TRAV ? " t-slot" : "");
-  card.innerHTML = `
-    <div class="ph">
-      <img src="../${a.f}" alt="${a.t}" loading="lazy">
-      <span class="badge ${a.s ? "" : "avail"}">${a.s ? "Collected" : "Available"}</span>
-      <span class="zoom-hint">Zoom in</span>
-    </div>
-    <h3>${a.t}</h3>
-    <div class="meta"><span>AED ${a.p.toLocaleString()}</span><span class="${a.s ? "no" : ""}">${a.s ? "Sold" : "Original"}</span></div>`;
-  card.addEventListener("click", () => openLB(a));
-  grid.appendChild(card);
-});
-const travCard = $(".card.t-slot");
-const travPh = travCard ? travCard.querySelector(".ph") : null;
-
-const hallTrack = $("#hallTrack");
-HALL.forEach(h => {
+const scatterCards = SCATTER.map(([id, x, y, w, depth], i) => {
+  const a = BY_ID[id];
   const f = document.createElement("figure");
-  f.className = "hall-item";
-  f.innerHTML = `<img src="../${h.f}" alt="${h.c}" loading="lazy"><figcaption>${h.c}</figcaption>`;
-  hallTrack.appendChild(f);
+  f.style.setProperty("--fd", (0.1 + i * 0.045) + "s");
+  const img = document.createElement("img");
+  img.alt = "";
+  img.dataset.k = thumbKey(a);
+  img.decoding = "async";
+  f.appendChild(img);
+  scatter.appendChild(f);
+  const m = SCATTER_M[id] || [x, y, w];
+  const tilt = [-4.5, 3.2, -2.1, 5.4, -6.2, 2.6, -3.4, 4.8, -1.6, 6.1, -5.2, 2.2, -3.8, 4.2, -2.6][i] || 0;
+  return { el: f, depth, tilt, d: [x, y, w], m, dx: 0, dy: 0,
+           rot: (i % 2 ? 1 : -1) * (5 + (i % 5) * 2), i };
 });
 
-const lb = $("#lightbox");
-function openLB(a) {
-  $("#lbImg").src = "../" + a.f;
-  $("#lbTitle").textContent = a.t;
-  $("#lbMeta").textContent = `Acrylic on canvas · AED ${a.p.toLocaleString()} · ${a.s ? "Collected" : "Available"}`;
-  $("#lbLink").href = SITE + a.u;
-  lb.hidden = false;
-  requestAnimationFrame(() => lb.classList.add("open"));
-}
-function closeLB() {
-  lb.classList.remove("open");
-  setTimeout(() => { lb.hidden = true; }, 350);
-}
-$(".lb-close").addEventListener("click", closeLB);
-lb.addEventListener("click", e => { if (e.target === lb) closeLB(); });
-addEventListener("keydown", e => { if (e.key === "Escape") closeLB(); });
+/* ── act II · travelling cards ── */
+const a2Cards = $("#a2Cards");
+const chapters = CHAPTERS.map(id => BY_ID[id]);
+const cardEls = chapters.map(a => {
+  const d = dimOf(artKey(a));
+  const fig = document.createElement("figure");
+  fig.className = "a2-card";
+  const img = document.createElement("img");
+  img.alt = a.t;
+  img.dataset.k = artKey(a);
+  img.decoding = "async";
+  img.style.setProperty("--ar", (d.w / d.h).toFixed(4));
+  const b = document.createElement("b");
+  b.textContent = a.t;
+  fig.append(img, b);
+  a2Cards.appendChild(fig);
+  return fig;
+});
 
-/* ---------- reveals ---------- */
-const io = new IntersectionObserver(es => es.forEach(en => {
-  if (en.isIntersecting) { en.target.classList.add("in"); io.unobserve(en.target); }
-}), { threshold: 0.18 });
-$$(".reveal, .hall-item").forEach(el => io.observe(el));
+/* ── act III · the ring ── */
+const ring = $("#ring");
+const plates = ART.map(a => {
+  const d = dimOf(artKey(a));
+  const fig = document.createElement("figure");
+  fig.className = "plate";
+  const img = document.createElement("img");
+  img.alt = a.t;
+  img.dataset.k = artKey(a);
+  img.decoding = "async";
+  const dim = document.createElement("span");
+  dim.className = "dim";
+  fig.append(img, dim);
+  ring.appendChild(fig);
+  return { el: fig, dim, ar: d.w / d.h, art: a };
+});
 
-/* ---------- master motion loop ---------- */
-const traveler = $("#traveler");
-const cards = scatter ? [...scatter.children] : [];
+/* ── the paint ── */
+const paint = $("#paint");
+const blots = SPLASHES.map(s => {
+  const el = document.createElement("i");
+  el.className = "blot";
+  el.style.setProperty("--c", "var(--" + s.c + ")");
+  el.dataset.k = "assets/fx/splash-" + s.s + ".webp";
+  const d = dimOf(el.dataset.k);
+  el.style.width = s.w + "vw";
+  el.style.height = (s.w * (d.h / d.w)) + "vw";
+  el.style.left = s.x + "%";
+  el.style.top = s.y + "%";
+  paint.appendChild(el);
+  /* throw direction: in from the nearest edge */
+  const cx = s.x + s.w / 2, cy = s.y + 18;
+  const tx = (cx < 50 ? -1 : 1) * (10 + Math.random() * 4);
+  const ty = (cy < 50 ? -1 : 1) * 7;
+  return { el, s, tx, ty };
+});
+
+/* ══════════════════════════════════════════════════════════════════
+   2 · LOADING SCREEN  ·  real, byte accurate progress
+   ══════════════════════════════════════════════════════════════════ */
+const OBJ = Object.create(null);
+const loader = $("#loader");
+const ldFill = $("#ldFill"), ldPct = $("#ldPct"), ldNote = $("#ldNote");
+const ldType = $("#ldType"), ldCaret = $("#ldCaret");
+
+let realP = 0;          /* the truth */
+let shownP = 0;         /* the eased number on screen */
+let loadDone = false;
+
+/* typewriter runs alongside the download, it never gates the reveal */
+(function typewriter() {
+  const T = "Dana Habayeb";
+  const t0 = performance.now();
+  (function step(now) {
+    const t = (now - t0) / 1000;
+    const n = clamp(Math.floor((t - 0.25) / 0.075), 0, T.length);
+    ldType.textContent = T.slice(0, n);
+    if (n >= T.length) ldCaret.classList.add("off");
+    if (!loadDone) requestAnimationFrame(step);
+  })(t0);
+})();
+
+(function paintLoader() {
+  const step = () => {
+    shownP += (realP - shownP) * 0.11;
+    if (realP >= 1 && shownP > 0.9995) shownP = 1;
+    const pc = Math.floor(shownP * 100);
+    ldPct.textContent = pc;
+    ldFill.style.width = (shownP * 100).toFixed(2) + "%";
+    if (!loader.classList.contains("gone")) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+})();
+
+async function fetchAll(onBytes) {
+  const list = MANIFEST;
+  const total = MANIFEST_BYTES || list.reduce((a, e) => a + e[1], 0);
+  let bytes = 0;
+  const bump = n => { bytes += n; onBytes(clamp01(bytes / total)); };
+
+  let cursor = 0;
+  async function worker() {
+    for (;;) {
+      const i = cursor++;
+      if (i >= list.length) return;
+      const [url, size] = list[i];
+      let got = 0;
+      try {
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(res.status);
+        if (res.body && res.body.getReader) {
+          const reader = res.body.getReader();
+          const chunks = [];
+          for (;;) {
+            const r = await reader.read();
+            if (r.done) break;
+            chunks.push(r.value);
+            got += r.value.length;
+            bump(r.value.length);
+          }
+          OBJ[url] = URL.createObjectURL(new Blob(chunks));
+        } else {
+          OBJ[url] = URL.createObjectURL(await res.blob());
+          got = size; bump(size);
+        }
+      } catch (e) {
+        OBJ[url] = url;                       /* let the browser do it */
+      }
+      if (got < size) bump(size - got);
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(6, list.length) }, worker));
+}
+
+async function decodeAll(onStep) {
+  const imgs = $$("img[data-k]");
+  let n = 0;
+  await Promise.all(imgs.map(async img => {
+    const src = OBJ[img.dataset.k] || img.dataset.k;
+    img.src = src;
+    try { await img.decode(); } catch (e) { /* ignore */ }
+    onStep(++n / imgs.length);
+  }));
+  blots.forEach(b => {
+    const u = "url(" + (OBJ[b.el.dataset.k] || b.el.dataset.k) + ")";
+    b.el.style.webkitMaskImage = u;
+    b.el.style.maskImage = u;
+  });
+  const ab = "url(" + (OBJ["assets/fx/splash-a.webp"] || "assets/fx/splash-a.webp") + ")";
+  document.documentElement.style.setProperty("--ab-blot", ab);
+}
+
+const FACES = [
+  '400 40px "Kaushan Script"', '300 40px "Cormorant Garamond"',
+  '400 40px "Cormorant Garamond"', '500 40px "Cormorant Garamond"',
+  'italic 300 40px "Cormorant Garamond"', 'italic 400 40px "Cormorant Garamond"',
+  '300 16px "Manrope"', '500 16px "Manrope"',
+];
+async function loadFonts(onStep) {
+  if (!document.fonts) return onStep(1);
+  let n = 0;
+  await Promise.all(FACES.map(async f => {
+    try { await document.fonts.load(f, "Dana Habayeb 0123456789"); } catch (e) {}
+    onStep(++n / FACES.length);
+  }));
+  try { await document.fonts.ready; } catch (e) {}
+}
+
+(async function boot() {
+  const guard = setTimeout(() => { realP = 1; reveal(); }, 45000);
+  try {
+    await fetchAll(p => { realP = Math.max(realP, p * 0.86); });
+    ldNote.textContent = "Preparing the hall";
+    await decodeAll(p => { realP = Math.max(realP, 0.86 + p * 0.10); });
+    ldNote.textContent = "Setting the type";
+    await loadFonts(p => { realP = Math.max(realP, 0.96 + p * 0.04); });
+  } catch (e) {
+    console.warn("preload fell back", e);
+  }
+  clearTimeout(guard);
+  realP = 1;
+  reveal();
+})();
+
+function reveal() {
+  if (loadDone) return;
+  loadDone = true;
+  const wait = () => {
+    if (shownP < 0.999) return requestAnimationFrame(wait);
+    ldNote.textContent = "Ready";
+    setTimeout(() => {
+      loader.classList.add("out");
+      document.body.classList.remove("pre");
+      document.body.classList.add("loaded");
+      introT0 = performance.now();
+      score();
+      setTimeout(() => loader.classList.add("gone"), 900);
+    }, 340);
+  };
+  requestAnimationFrame(wait);
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   3 · LAYOUT  ·  the score, written in viewport heights
+   ══════════════════════════════════════════════════════════════════ */
+const journey = $("#journey");
+const stage = $("#stage");
+const act2 = $("#act2"), a2Plate = $("#a2Plate"), a2Word = $("#a2Word"),
+      a2Meta = $("#a2Meta"), a2Scrim = $("#a2Scrim"),
+      a2Num = $("#a2Num"), a2Title = $("#a2Title"), a2Line = $("#a2Line");
+const veil = $("#veil"), redveil = $("#redveil");
+const hall = $("#hall"), echo = $("#echo"), echoImg = echo.querySelector("img");
+const hallCap = $("#hallCap"), hcNum = $("#hcNum"), hcTitle = $("#hcTitle"),
+      hcLine = $("#hcLine"), hcMeta = $("#hcMeta"), hallLink = $("#hallLink"),
+      hallHead = $(".hall-head"), dialP = $("#dialP");
+const nav = $("#nav");
+const about = $("#about");
+const heroCentre = $(".hero-center"), heroCue = $(".hero-cue");
+const ringWrap = $(".ring-wrap"), dialEl = $(".dial");
+const a2Total = $("#a2Meta .a2-idx i"), hcTotal = $(".hc-idx i");
+a2Total.textContent = "/ " + pad2(CHAPTERS.length);
+hcTotal.textContent = "/ " + pad2(ART.length);
+
+let vw = 0, vh = 0, vmax = 0, mobile = false;
+let CARD_STEP, CARDS_LEN, CIRCLE, PAINTP, IRIS, HALL_IN, HALL_STEP, HALL_LEN, HALL_OUT, RED;
+let P = {};              /* phase boundaries, in vh units */
+let TOTAL = 0;
+let coverR = 0;          /* radius that just covers the viewport, px */
+let JT = 0, JSPAN = 1, ABT = 0;
+let RING_R = 0, PERSP = 1150, RING_STEP = 30, plateBase = 0;
+
+function score() {
+  vw = innerWidth; vh = innerHeight; vmax = Math.max(vw, vh);
+  mobile = vw < 760;
+  const k = REDUCED ? 0.45 : (mobile ? 0.74 : 1);
+
+  CARD_STEP = 70 * k;
+  CARDS_LEN = CARD_STEP * (chapters.length + 0.35);   /* lead in, last card holds */
+  CIRCLE  = 92 * k;
+  PAINTP  = 155 * k;
+  IRIS    = 86 * k;
+  HALL_IN = 46 * k;
+  HALL_STEP = 40 * k;
+  HALL_LEN = HALL_STEP * (ART.length - 1);
+  HALL_OUT = 30 * k;
+  RED     = 78 * k;
+
+  let at = 0;
+  const seg = (n, len) => { P[n] = { a: at, b: at + len, l: len }; at += len; };
+  seg("cards", CARDS_LEN);
+  seg("circle", CIRCLE);
+  seg("paint", PAINTP);
+  seg("iris", IRIS);
+  seg("hallIn", HALL_IN);
+  seg("hall", HALL_LEN);
+  seg("hallOut", HALL_OUT);
+  seg("red", RED);
+  TOTAL = at;
+
+  journey.style.height = (TOTAL / 100 * vh + vh) + "px";
+  coverR = Math.hypot(vw, vh) / 2;
+  JT = journey.offsetTop;
+  JSPAN = Math.max(1, journey.offsetHeight - vh);
+  ABT = about.offsetTop;
+
+  /* the works sit on a carousel: the piece in focus is nearest the camera,
+     its neighbours swing away to the sides and fall back into the dark */
+  for (const c of scatterCards) {
+    const [x, y, w] = mobile ? c.m : c.d;
+    c.el.style.setProperty("--x", x + "%");
+    c.el.style.setProperty("--y", y + "%");
+    c.el.style.setProperty("--w", mobile ? "clamp(52px," + w + "vw,132px)"
+                                         : "clamp(58px," + w + "vw,168px)");
+    c.dx = (x - 50) / 50; c.dy = (y - 50) / 50;
+  }
+
+  PERSP = mobile ? 1150 : 1500;
+  RING_R = mobile ? clamp(vw * 0.94, 330, 560) : clamp(vw * 0.92, 640, 1750);
+  RING_STEP = mobile ? 38 : 34;
+  plateBase = (mobile ? 0.40 : 0.455) * vh;
+  ringWrap.style.perspective = PERSP + "px";
+
+  plates.forEach(p => {
+    const f = clamp(Math.pow(p.art.hcm / 150, 0.30), .72, 1);
+    let h = plateBase * f;
+    let w = h * p.ar;
+    const maxW = (mobile ? 0.72 : 0.42) * vw;
+    if (w > maxW) { w = maxW; h = w / p.ar; }
+    p.w = w; p.h = h;
+    p.el.style.width = w + "px";
+    p.el.style.height = h + "px";
+    p.el.style.marginLeft = (-w / 2) + "px";
+    p.el.style.marginTop = (-h / 2) + "px";
+    p.rh = h; p.rw = w;                       /* focus sits at z = 0 */
+  });
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   4 · MOTION
+   ══════════════════════════════════════════════════════════════════ */
+/* card path keyframes, keyed on q = cardIndex - progress */
+const KQ = [-1.35, -1, -0.5, 0, 0.5, 1, 1.35];
+const KX = [64, 47, 22, 0, -27, -62, -90];        /* vw   */
+const KY = [23, 17, 7, 0, -9, -21, -32];          /* vh   */
+const KZ = [-1600, -1050, -430, 0, 310, 720, 980];/* px   */
+const KRY = [36, 29, 15, 0, -13, -24, -30];       /* deg  */
+const KRZ = [11, 8, 4, 0, -4, -9, -12];           /* deg  */
+const KOP = [0, .5, 1, 1, 1, .62, 0];
+function kf(arr, q) {
+  if (q <= KQ[0]) return arr[0];
+  if (q >= KQ[KQ.length - 1]) return arr[arr.length - 1];
+  let i = 0; while (q > KQ[i + 1]) i++;
+  const t = (q - KQ[i]) / (KQ[i + 1] - KQ[i]);
+  return lerp(arr[i], arr[i + 1], smoothstep(t));
+}
+
+let uTarget = 0, u = 0, vel = 0, sVel = 0;
 let mx = 0, my = 0, cx = 0, cy = 0;
+let introT0 = 0;
+let a2Active = -1, hallActive = -1;
+let navDark = null;
+
 addEventListener("mousemove", e => {
-  mx = e.clientX / innerWidth - 0.5;
-  my = e.clientY / innerHeight - 0.5;
+  mx = e.clientX / innerWidth - .5;
+  my = e.clientY / innerHeight - .5;
 }, { passive: true });
 
-const hex = h => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)];
-const BG_A = hex("#0c0a09"), BG_B = hex("#6D88A4");
+function setU() {
+  uTarget = clamp01((scrollY - JT) / JSPAN) * TOTAL;
+}
 
-(function frame() {
-  const vh = innerHeight, vw = innerWidth;
+function local(name) {
+  const p = P[name];
+  return clamp01((u - p.a) / p.l);
+}
 
-  /* hero parallax */
-  cx += (mx - cx) * 0.06; cy += (my - cy) * 0.06;
-  cards.forEach(c => {
-    const d = +c.dataset.depth || 16;
-    c.style.setProperty("--px", (cx * d) + "px");
-    c.style.setProperty("--py", (cy * d) + "px");
-  });
+let last = performance.now();
+function frame(now) {
+  const dt = Math.min(0.1, (now - last) / 1000); last = now;
+  setU();
+  const f = REDUCED ? 1 : 1 - Math.exp(-dt * 8.5);
+  const prev = u;
+  u += (uTarget - u) * f;
+  vel = (u - prev) / Math.max(dt, .001) / 100;          /* vh per second-ish */
+  sVel += (vel - sVel) * (1 - Math.exp(-dt * 6));
 
-  /* stories: one card per scroll step, background fades to #6D88A4 once placed */
-  let pRaw = 0, stickyTop = 0;
-  if (storiesSec && stack) {
-    const r = storiesSec.getBoundingClientRect();
-    const H = storiesSec.offsetHeight;
-    pRaw = clamp01(-r.top / (H - vh)) * (STORIES.length - 1);
-    stickyTop = Math.min(Math.max(0, r.top), r.top + H - vh);
-    const mix = ease(clamp01((pRaw - 0.12) / 0.4));
-    storiesSec.style.backgroundColor = `rgb(${BG_A.map((v, i) => Math.round(lerp(v, BG_B[i], mix))).join(",")})`;
-    const kids = [...stack.children];
-    kids.forEach((el, i) => {
-      const d = i - pRaw;
-      const x = knot(K_X, d) * vw / 100;
-      const y = knot(K_Y, d) * vh / 100;
-      el.style.transform = `translate(-50%,-50%) translate(${x.toFixed(1)}px,${y.toFixed(1)}px) rotate(${knot(K_R, d).toFixed(2)}deg) scale(${knot(K_S, d).toFixed(3)})`;
-      el.style.filter = `brightness(${knot(K_B, d).toFixed(2)})`;
-      el.style.zIndex = d < -0.5 ? 2 : (d < 0.5 ? 6 : 5 - Math.min(3, Math.floor(d)));
-    });
-    const idx = Math.round(pRaw);
-    if (idx !== activeStory) {
-      activeStory = idx;
-      const t = STORIES[idx].a.t;
-      sTitle.textContent = t;
-      sBody.textContent = STORY_COPY[t];
-      infoBox.classList.remove("swap");
-      void infoBox.offsetWidth;
-      infoBox.classList.add("swap");
-    }
-  }
-
-  /* traveling artwork: hero slot -> first story card -> its tile in the collection */
-  if (traveler && heroSlot && storySlot && travPh) {
-    const r1 = heroSlot.getBoundingClientRect();
-    const r3 = travPh.getBoundingClientRect();
-    /* analytic rect of the (transformed) story slot */
-    const sw = storySlot.offsetWidth, sh = storySlot.offsetHeight;
-    const d0 = -pRaw;
-    const scx = storySlot.offsetLeft + knot(K_X, d0) * vw / 100;
-    const scy = stickyTop + storySlot.offsetTop + knot(K_Y, d0) * vh / 100;
-    const sw2 = sw * knot(K_S, d0), sh2 = sh * knot(K_S, d0);
-    const r2 = { left: scx - sw2 / 2, top: scy - sh2 / 2, width: sw2, height: sh2 };
-    const p12 = ease(clamp01((vh - r2.top) / (vh * 0.6)));
-    const p23 = ease(clamp01((vh * 1.05 - r3.top) / (vh * 0.75)));
-    const x = lerp(lerp(r1.left, r2.left, p12), r3.left, p23);
-    const y = lerp(lerp(r1.top, r2.top, p12), r3.top, p23);
-    const w = lerp(lerp(r1.width, r2.width, p12), r3.width, p23);
-    const h = lerp(lerp(r1.height, r2.height, p12), r3.height, p23);
-    const rot = lerp(lerp(0, knot(K_R, d0), p12), 0, p23);
-    const br = lerp(lerp(1, knot(K_B, d0), p12), 1, p23);
-    const landed = p23 > 0.995;
-    traveler.style.visibility = landed ? "hidden" : "visible";
-    traveler.style.transform = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px) rotate(${rot.toFixed(2)}deg)`;
-    traveler.style.width = w.toFixed(1) + "px";
-    traveler.style.height = h.toFixed(1) + "px";
-    traveler.style.filter = `brightness(${br.toFixed(2)})`;
-    travCard.classList.toggle("landed", landed);
-  }
+  hero(dt);
+  const cCircle = local("circle");
+  const cPaint = local("paint");
+  const cIris = local("iris");
+  actTwo(cCircle);
+  circle(cCircle);
+  paintPhase(cPaint, cIris);
+  iris(cIris);
+  hallPhase(cIris);
+  red();
+  chrome();
 
   requestAnimationFrame(frame);
-})();
+}
+
+/* ── ACT I ── */
+function hero(dt) {
+  const h = clamp01(scrollY / vh);
+  const e = easeIn(h);
+  cx += (mx - cx) * (REDUCED ? 1 : .06);
+  cy += (my - cy) * (REDUCED ? 1 : .06);
+
+  const centre = heroCentre;
+  centre.style.transform = `translate3d(0,${(-h * 22 * vh / 100).toFixed(1)}px,0) scale(${(1 - h * .1).toFixed(4)})`;
+  centre.style.opacity = (1 - clamp01(h * 1.5)).toFixed(3);
+
+  const intro = introT0 ? clamp01((performance.now() - introT0) / 1700) : 0;
+  const ie = easeOut(intro);
+
+  for (const c of scatterCards) {
+    const d = c.depth;
+    const px = cx * d, py = cy * d;
+    const out = e * (0.9 + Math.abs(c.dx) * .5);
+    const ox = c.dx * out * vw * .42;
+    const oy = c.dy * out * vh * .40 - e * vh * .06;
+    const z = e * 340 * (0.5 + (c.i % 3) * .3);
+    const rise = (1 - ie) * (26 + (c.i % 4) * 8);
+    const sc = lerp(.86, 1, ie);
+    c.el.style.transform =
+      `translate(-50%,-50%) translate3d(${(px + ox).toFixed(1)}px,${(py + oy + rise).toFixed(1)}px,${z.toFixed(0)}px)` +
+      ` rotate(${(c.tilt * ie + c.rot * e).toFixed(2)}deg) scale(${sc.toFixed(3)})`;
+    c.el.style.opacity = (intro * (1 - clamp01((h - .55) / .4))).toFixed(3);
+  }
+  heroCue.style.opacity = (intro * (1 - clamp01(h * 4))).toFixed(2);
+}
+
+/* ── ACT II ── */
+function actTwo(cCircle) {
+  const covered = cCircle >= 0.999;
+  if (covered) {
+    if (act2.style.visibility !== "hidden") act2.style.visibility = "hidden";
+    return;
+  }
+  if (act2.style.visibility === "hidden") act2.style.visibility = "";
+
+  const n = chapters.length;
+  const cp = Math.min(u / CARD_STEP - 1.35, n - 1);          /* the last one holds */
+  const hold = clamp01((u - CARDS_LEN) / CARD_STEP);         /* it leans in as the portal opens */
+
+  for (let i = 0; i < n; i++) {
+    const el = cardEls[i];
+    const q = cp - i - sVel * .06;
+    if (q < KQ[0] || q > KQ[KQ.length - 1]) {
+      if (el.style.opacity !== "0") { el.style.opacity = "0"; el.style.visibility = "hidden"; }
+      continue;
+    }
+    el.style.visibility = "";
+    const x = kf(KX, q) * vw / 100;
+    const y = kf(KY, q) * vh / 100;
+    const z = kf(KZ, q) + (i === n - 1 ? hold * 150 : 0);
+    el.style.transform =
+      `translate(-50%,-50%) translate3d(${x.toFixed(1)}px,${y.toFixed(1)}px,${z.toFixed(0)}px)` +
+      ` rotateY(${kf(KRY, q).toFixed(2)}deg) rotateZ(${kf(KRZ, q).toFixed(2)}deg)`;
+    el.style.opacity = kf(KOP, q).toFixed(3);
+    el.style.zIndex = String(50 + Math.round(z / 20));
+  }
+
+  /* the oversized title drifts against the card it belongs to */
+  const idx = clamp(Math.round(cp), 0, n - 1);
+  const frac = cp - idx;
+  a2Word.style.transform =
+    `translate(-50%,-50%) translate3d(${(-frac * vw * .30).toFixed(1)}px,${(frac * -3).toFixed(1)}px,0)`;
+  a2Word.style.opacity = (0.12 * clamp01(1 - Math.abs(frac) * 1.7)).toFixed(3);
+
+  if (idx !== a2Active) {
+    a2Active = idx;
+    const a = chapters[idx];
+    a2Word.textContent = a.t;
+    a2Num.textContent = pad2(idx + 1);
+    a2Title.textContent = a.t;
+    a2Line.textContent = a.cap;
+    a2Meta.classList.remove("swap"); void a2Meta.offsetWidth; a2Meta.classList.add("swap");
+  }
+  /* the room falls into shadow as the portal comes forward */
+  const r = easeIn(cCircle);
+  a2Plate.style.transform = `scale(${(1 - r * .05).toFixed(4)})`;
+  a2Meta.style.opacity = (1 - clamp01(cCircle * 2.6)).toFixed(3);
+  a2Scrim.style.opacity = r.toFixed(3);
+}
+
+/* ── the beige circle ── */
+function circle(c) {
+  const r = easeInOut(c) * coverR * 1.02;
+  veil.style.clipPath = `circle(${r.toFixed(1)}px at 50% 50%)`;
+}
+
+/* ── the paint ── */
+function paintPhase(pp, ir) {
+  const away = easeIn(ir);
+  for (const b of blots) {
+    const s = clamp01((pp - b.s.o) / 0.30);
+    if (s <= 0 && away <= 0) {
+      if (b.el.style.opacity !== "0") b.el.style.opacity = "0";
+      continue;
+    }
+    const e = easeOut(s);
+    const spread = e * 138;
+    b.el.style.clipPath = `circle(${spread.toFixed(1)}% at ${b.s.ox}% ${b.s.oy}%)`;
+    const tx = b.tx * (1 - e) + b.tx * away * 2.4;
+    const ty = b.ty * (1 - e) + b.ty * away * 2.4;
+    const sc = lerp(.9, 1, e) * (1 + away * .12);
+    b.el.style.transform =
+      `translate3d(${tx.toFixed(2)}vw,${ty.toFixed(2)}vh,0) rotate(${b.s.r}deg) scale(${sc.toFixed(3)})`;
+    b.el.style.opacity = (clamp01(s * 8) * (1 - clamp01(away * 1.35))).toFixed(3);
+  }
+}
+
+/* ── the iris: the beige peels open onto the hall ── */
+let irisOn = false;
+function iris(ir) {
+  if (ir <= 0) {
+    if (irisOn) {
+      irisOn = false;
+      veil.style.webkitMaskImage = "none"; veil.style.maskImage = "none";
+      hall.style.opacity = "0";
+    }
+    return;
+  }
+  irisOn = true;
+  const r = easeInOut(ir) * coverR * 1.06;
+  const g = `radial-gradient(circle at 50% 50%, rgba(0,0,0,0) ${r.toFixed(1)}px, rgba(0,0,0,1) ${(r + 1.5).toFixed(1)}px)`;
+  veil.style.webkitMaskImage = g; veil.style.maskImage = g;
+  hall.style.opacity = "1";
+}
+
+/* ── ACT III · the circular hall ── */
+function hallPhase(ir) {
+  const inn = local("hallIn");
+  const hp = local("hall");
+  const out = local("hallOut");
+  const live = ir > 0.02;
+  if (!live) {
+    if (ring.dataset.on === "1") { ring.dataset.on = "0"; hall.style.pointerEvents = "none"; }
+    return;
+  }
+  ring.dataset.on = "1";
+  hall.style.pointerEvents = out > .9 ? "none" : "auto";
+
+  const entry = ir * inn;                      /* the room arrives with the iris */
+  const push = (1 - easeOut(clamp01(ir * 1.1))) * 620 + (1 - easeOut(inn)) * 380 + easeIn(out) * 640;
+  const gp = hp * (ART.length - 1);
+
+  ring.style.transform =
+    `translateZ(${(-push).toFixed(0)}px) rotateY(${(-sVel * 1.4).toFixed(2)}deg) rotateX(${(sVel * .35).toFixed(2)}deg)`;
+
+  for (let i = 0; i < plates.length; i++) {
+    const p = plates[i];
+    const th = (i - gp) * RING_STEP;
+    const a = Math.abs(th) / RING_STEP;
+    if (a > 2.35) {
+      if (p.el.style.opacity !== "0") { p.el.style.opacity = "0"; p.el.style.visibility = "hidden"; }
+      continue;
+    }
+    p.el.style.visibility = "";
+    p.el.style.transform =
+      `translateZ(${(-RING_R).toFixed(0)}px) rotateY(${th.toFixed(2)}deg) translateZ(${RING_R.toFixed(0)}px)`;
+    p.el.style.opacity = (clamp01((2.35 - a) / .85) * (1 - easeIn(out) * .9)).toFixed(3);
+    p.dim.style.opacity = clamp(a * .34, 0, .76).toFixed(3);
+    p.el.style.zIndex = String(40 - Math.round(a * 10));
+  }
+
+  /* the reflection under the piece in focus */
+  const idx = clamp(Math.round(gp), 0, ART.length - 1);
+  const frac = gp - idx;
+  const fp = plates[idx];
+  echo.style.width = fp.rw + "px";
+  echo.style.height = (fp.rh * .34) + "px";
+  echo.style.top = (0.41 * vh + fp.rh / 2 + 8) + "px";
+  echo.style.opacity = (0.30 * clamp01(1 - Math.abs(frac) * 2.1) * easeOut(inn) * (1 - out)).toFixed(3);
+
+  if (idx !== hallActive) {
+    hallActive = idx;
+    const a = ART[idx];
+    if (echoImg.dataset.cur !== a.id) {
+      echoImg.dataset.cur = a.id;
+      echoImg.src = OBJ[artKey(a)] || artKey(a);
+    }
+    hcNum.textContent = pad2(idx + 1);
+    hcTitle.textContent = a.t;
+    hcLine.textContent = a.cap;
+    hcMeta.textContent = `Acrylic on canvas · ${a.dim} · AED ${a.p.toLocaleString()} · ${a.sold ? "Collected" : "Available"}`;
+    hallLink.href = SITE + a.u;
+    hallCap.classList.remove("swap"); void hallCap.offsetWidth; hallCap.classList.add("swap");
+  }
+
+  const ui = easeOut(inn) * (1 - easeIn(out));
+  hallCap.style.opacity = ui.toFixed(3);
+  hallHead.style.opacity = ui.toFixed(3);
+  hallLink.style.opacity = ui.toFixed(3);
+  hallCap.style.transform = `translateX(-50%) translateY(${((1 - ui) * 26).toFixed(1)}px)`;
+  dialP.style.strokeDashoffset = (339.29 * (1 - hp)).toFixed(1);
+  dialEl.style.opacity = ui.toFixed(3);
+}
+
+/* ── the red takes over ── */
+function red() {
+  const r = local("red");
+  redveil.style.clipPath = `circle(${(easeInOut(clamp01(r / .92)) * coverR * 1.03).toFixed(1)}px at 50% 50%)`;
+}
+
+/* ── chrome: nav colour, year ── */
+function chrome() {
+  nav.classList.toggle("tight", scrollY > 60);
+  const inHall = u > P.iris.a + P.iris.l * .35 && u < P.red.a + P.red.l * .25;
+  const inAbout = scrollY + 70 > ABT;
+  const dark = inHall || inAbout;
+  if (dark !== navDark) { navDark = dark; nav.classList.toggle("on-dark", dark); }
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   5 · CHROME + WIRING
+   ══════════════════════════════════════════════════════════════════ */
+$("#yr").textContent = new Date().getFullYear();
+
+$$("[data-jump]").forEach(a => a.addEventListener("click", e => {
+  e.preventDefault();
+  const to = a.dataset.jump;
+  let y = 0;
+  if (to === "top") y = 0;
+  else if (to === "stories") y = JT + 6;
+  else if (to === "gallery") y = JT + (P.hallIn.a + P.hallIn.l * .6) / TOTAL * JSPAN;
+  else if (to === "about") y = ABT;
+  scrollTo({ top: y, behavior: "smooth" });
+}));
+
+/* clicking the piece in focus opens it on danahabayeb.art */
+ringWrap.addEventListener("click", () => {
+  if (hallActive >= 0 && u > P.hallIn.a && u < P.hallOut.b) window.open(SITE + ART[hallActive].u, "_blank", "noopener");
+});
+
+let rt;
+addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(score, 140); }, { passive: true });
+addEventListener("orientationchange", () => setTimeout(score, 260));
+
+score();
+u = uTarget = 0;
+requestAnimationFrame(frame);
+
+/* small hook used by the QA harness to jump to a named beat */
+window.__seek = (name, t = .5) => {
+  const p = P[name];
+  if (!p) return null;
+  const y = JT + ((p.a + p.l * t) / TOTAL) * JSPAN;
+  scrollTo(0, y);
+  return y;
+};
+window.__beats = () => ({ P, TOTAL, JT, JSPAN });
+window.__settled = () => Math.abs(uTarget - u) < 0.01;
+window.__snap = () => { setU(); u = uTarget; sVel = vel = 0; };
