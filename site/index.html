@@ -12,40 +12,11 @@
 </head>
 <body>
 
-<!-- REALISTIC BRUSH LOADER — hand-built, choreographed after the reference clip -->
+<!-- TYPEWRITER LOADER — types the brand while hero images decode -->
 <div id="loader">
-  <div class="ld-stage">
-    <div class="ld-line ld-1"><span id="ldT1">Art by</span></div>
-    <div class="ld-line ld-2"><span id="ldT2">Dana Habayeb</span></div>
-    <div class="ld-shadow" id="ldShadow"></div>
-    <div class="ld-brush" id="ldBrush" aria-hidden="true">
-      <svg viewBox="0 0 60 196">
-        <defs>
-          <linearGradient id="wood" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0" stop-color="#7c4a1f"/><stop offset=".3" stop-color="#c98a4b"/>
-            <stop offset=".5" stop-color="#e8b57c"/><stop offset=".72" stop-color="#b06f33"/>
-            <stop offset="1" stop-color="#6f3f18"/>
-          </linearGradient>
-          <linearGradient id="metal" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0" stop-color="#787878"/><stop offset=".22" stop-color="#f4f4f4"/>
-            <stop offset=".5" stop-color="#c2c2c2"/><stop offset=".78" stop-color="#8a8a8a"/>
-            <stop offset="1" stop-color="#5f5f5f"/>
-          </linearGradient>
-          <linearGradient id="bristle" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stop-color="#7a5433"/><stop offset=".45" stop-color="#43301d"/>
-            <stop offset="1" stop-color="#140c06"/>
-          </linearGradient>
-        </defs>
-        <path d="M23 0h14c3 0 5 2 5 6v80H18V6c0-4 2-5 5-5z" fill="url(#wood)"/>
-        <path d="M26 4v78" stroke="#f6d3a4" stroke-width="2" opacity=".5"/>
-        <rect x="16" y="86" width="28" height="34" rx="5" fill="url(#metal)"/>
-        <rect x="16" y="92" width="28" height="2.4" fill="#6e6e6e" opacity=".55"/>
-        <rect x="16" y="110" width="28" height="2.4" fill="#6e6e6e" opacity=".55"/>
-        <path d="M18 118h24c0 20-4 38-8 52-2 7-6 7-8 0-4-14-8-32-8-52z" fill="url(#bristle)"/>
-        <path d="M24 122c0 18 2 34 4 44M34 122c0 18-2 34-4 44" stroke="#241a10" stroke-width="1.2" opacity=".7" fill="none"/>
-        <path d="M27 168c1 8 5 8 6 0l-1 14c-1 5-4 5-5 0z" fill="#0d0703"/>
-      </svg>
-    </div>
+  <div class="type-wrap">
+    <p class="type-line t1"><span id="typeL1"></span><i class="caret" id="caret1"></i></p>
+    <p class="type-line t2"><span id="typeL2"></span><i class="caret off" id="caret2"></i></p>
   </div>
 </div>
 
@@ -72,10 +43,9 @@
   <section class="hero">
     <div class="scatter" id="scatter" aria-hidden="true"></div>
     <div class="hero-center">
-      <p class="hero-kicker reveal">Original acrylics · Dubai</p>
       <h1 class="hero-head reveal-lines" aria-label="Art that tells a story">
-        <span><i>Art That Tells</i></span>
-        <span><i>A Story</i></span>
+        <span><i>Art that tells</i></span>
+        <span><i>a story.</i></span>
       </h1>
       <p class="hero-micro reveal">&amp; painted to be felt</p>
     </div>
@@ -83,16 +53,7 @@
       <path id="scribblePath" d="M6 18 C 60 2, 96 30, 148 22 C 190 16, 196 44, 178 52 C 160 60, 158 34, 190 40 C 216 46, 208 84, 226 108"
         fill="none" stroke="#C7502B" stroke-width="2.5" stroke-linecap="round"/>
     </svg>
-    <div class="orbit" aria-hidden="true">
-      <svg viewBox="0 0 120 120">
-        <defs><path id="orbitPath" d="M60,60 m-46,0 a46,46 0 1,1 92,0 a46,46 0 1,1 -92,0"/></defs>
-        <text><textPath href="#orbitPath">SUBMIT YOUR STORY — COMMISSION HER — SUBMIT YOUR STORY —</textPath></text>
-      </svg>
-      <i>✳</i>
-    </div>
-    <a href="#stories" class="scroll-cue dark-cue reveal"><span></span>See the stories</a>
   </section>
-  <div class="cursor" id="cursor" aria-hidden="true">✳</div>
 
   <!-- the traveling artwork: hero → stories → its place in the collection -->
   <figure class="traveler" id="traveler" aria-hidden="true"><img src="../image-4.png" alt=""></figure>
@@ -100,7 +61,6 @@
   <!-- SECOND SECTION — pinned, scroll-driven story cards -->
   <section id="stories" aria-label="Stories behind the paintings">
     <div class="stories-sticky">
-      <p class="ghost" id="ghostText">Every canvas tells a story<br>and becomes a part of you</p>
       <div class="story-info">
         <h3 id="storyTitle">Pali Pika</h3>
         <p id="storyBody"></p>

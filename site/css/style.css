@@ -20,20 +20,18 @@ a{color:inherit;text-decoration:none}
   animation:grain 7s steps(8) infinite}
 @keyframes grain{0%{transform:translate(0,0)}25%{transform:translate(-2%,3%)}50%{transform:translate(3%,-2%)}75%{transform:translate(-3%,-3%)}100%{transform:translate(2,2)}}
 
-/* ---------- realistic brush loader (hand-built, after the reference clip) ---------- */
+/* ---------- typewriter loader ---------- */
 #loader{position:fixed;inset:0;z-index:100;background:#ECEBE9;display:flex;align-items:center;justify-content:center;
   overflow:hidden;transition:transform 1s cubic-bezier(.76,0,.24,1)}
 #loader.done{transform:translateY(-100%)}
-.ld-stage{position:relative;width:min(640px,88vw);height:230px}
-.ld-line{font-family:var(--script);color:#1a1a1a;line-height:1.15;text-align:center}
-.ld-line span{display:inline-block;clip-path:inset(-30% 100% -30% -5%)}
-.ld-1{font-size:clamp(24px,4vw,34px)}
-.ld-2{font-size:clamp(54px,10vw,92px)}
-.ld-shadow{position:absolute;left:0;top:0;width:74px;height:16px;border-radius:50%;opacity:0;
-  background:radial-gradient(closest-side,rgba(0,0,0,.38),transparent);filter:blur(3px)}
-.ld-brush{position:absolute;left:0;top:0;width:64px;height:208px;opacity:0;will-change:transform;
-  filter:drop-shadow(0 8px 16px rgba(0,0,0,.22))}
-.ld-brush svg{width:100%;height:100%}
+.type-wrap{text-align:center;padding:0 6vw}
+.type-line{font-family:var(--script);color:#1a1a1a;line-height:1.3;min-height:1.3em}
+.t1{font-size:clamp(22px,3.6vw,30px)}
+.t2{font-size:clamp(50px,9vw,88px)}
+.caret{display:inline-block;width:3px;height:.85em;background:#1a1a1a;margin-left:8px;vertical-align:-.08em;
+  animation:blink .75s steps(1) infinite}
+.caret.off{display:none}
+@keyframes blink{50%{opacity:0}}
 
 /* ---------- nav ---------- */
 #nav{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;
@@ -73,7 +71,6 @@ body.loaded .scatter figure{opacity:1}
 .scatter figure figcaption{position:absolute;left:0;right:0;bottom:-22px;font-size:8px;letter-spacing:.3em;text-transform:uppercase;color:#8a7a74;white-space:nowrap}
 @keyframes floaty{from{margin-top:-5px}to{margin-top:7px}}
 .hero-center{position:relative;z-index:2;text-align:center;padding:0 6vw;pointer-events:none}
-.hero-kicker{font-size:11px;letter-spacing:.42em;text-transform:uppercase;color:var(--wine);margin-bottom:26px}
 .eyebrow{font-size:11px;letter-spacing:.42em;text-transform:uppercase;color:var(--camel);margin-bottom:20px}
 h1{font-family:var(--serif);font-weight:500;line-height:.9;letter-spacing:.06em;color:var(--cream)}
 .hero-head{font-size:clamp(46px,7.4vw,116px);line-height:1.02;letter-spacing:.01em;color:var(--char)}
@@ -85,16 +82,6 @@ body.loaded .reveal-lines i{transform:translateY(0)}
 .scribble{position:absolute;left:13%;top:57%;width:min(240px,24vw);z-index:3;overflow:visible;pointer-events:none}
 .scribble path{stroke-dasharray:700;stroke-dashoffset:700;transition:stroke-dashoffset 1.8s ease 1.1s}
 body.loaded .scribble path{stroke-dashoffset:0}
-.orbit{position:absolute;left:50%;top:47%;width:118px;height:118px;transform:translate(-50%,-50%);z-index:3;pointer-events:none}
-.orbit svg{width:100%;height:100%;animation:spin 16s linear infinite}
-.orbit text{font-size:9.2px;letter-spacing:.24em;fill:#262927;font-family:var(--sans);text-transform:uppercase}
-.orbit i{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-style:normal;color:var(--rust);font-size:24px}
-@keyframes spin{to{transform:rotate(360deg)}}
-.scroll-cue{display:inline-flex;align-items:center;gap:14px;font-size:11px;letter-spacing:.34em;text-transform:uppercase}
-.scroll-cue span{width:52px;height:1px;background:var(--wine);position:relative;overflow:hidden;display:inline-block}
-.scroll-cue span::after{content:"";position:absolute;inset:0;background:var(--char);transform:translateX(-100%);animation:cue 2.2s ease infinite}
-@keyframes cue{50%{transform:translateX(0)}100%{transform:translateX(100%)}}
-.dark-cue{position:absolute;left:50%;transform:translateX(-50%);bottom:5vh;color:var(--char);z-index:3}
 
 .reveal{opacity:0;transform:translateY(34px);transition:opacity 1s ease,transform 1s cubic-bezier(.19,1,.22,1)}
 .reveal.in{opacity:1;transform:none}
@@ -104,27 +91,21 @@ body.loaded .scribble path{stroke-dashoffset:0}
   box-shadow:0 16px 40px rgba(0,0,0,.25);will-change:transform,width;height;visibility:hidden}
 .traveler img{width:100%;height:100%;object-fit:cover}
 
-/* ---------- second section — pinned story cards ---------- */
-#stories{height:430vh;position:relative;background:#0c0a09}
+/* ---------- second section — pinned, one-by-one story cards ---------- */
+#stories{height:660vh;position:relative;background:#0c0a09}
 .stories-sticky{position:sticky;top:0;height:100vh;overflow:hidden}
-.ghost{position:absolute;left:6vw;right:6vw;top:14vh;font-family:var(--serif);text-transform:uppercase;
-  letter-spacing:.05em;font-size:clamp(38px,6.6vw,104px);line-height:1.14;color:rgba(241,233,228,.09);opacity:0}
-.story-info{position:absolute;left:6vw;bottom:9vh;max-width:360px;z-index:3}
-#storyTitle{font-size:12px;letter-spacing:.42em;text-transform:uppercase;color:var(--cream);font-weight:600}
-#storyBody{color:rgba(241,233,228,.55);font-size:12.5px;line-height:1.85;margin-top:14px}
-.story-info.swap{animation:capin .7s cubic-bezier(.19,1,.22,1)}
+.story-info{position:absolute;left:4vw;top:52%;max-width:330px;z-index:9}
+#storyTitle{font-size:12px;letter-spacing:.42em;text-transform:uppercase;color:#fff;font-weight:600}
+#storyBody{color:rgba(255,255,255,.75);font-size:12.5px;line-height:1.85;margin-top:14px}
+.story-info.swap #storyTitle,.story-info.swap #storyBody{animation:capin .7s cubic-bezier(.19,1,.22,1)}
 @keyframes capin{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:none}}
-.story-stack{position:absolute;left:0;top:50%;transform:translateY(-50%);display:flex;align-items:center;
-  padding-left:16vw;padding-right:14vw;will-change:transform}
-.story-card{flex:0 0 auto;width:min(26vw,330px);aspect-ratio:3/4;position:relative;border-radius:16px;overflow:hidden;
-  margin-left:-8vw;border:2px solid rgba(255,255,255,.9);box-shadow:0 30px 70px rgba(0,0,0,.55);
-  transform:rotate(var(--r)) scale(.9);filter:brightness(.55);z-index:1;
-  transition:transform .8s cubic-bezier(.22,1,.36,1),filter .8s ease}
-.story-card.active{transform:rotate(0deg) scale(1);filter:brightness(1);z-index:6}
+.story-stack{position:absolute;inset:0}
+.story-card,.story-slot{position:absolute;left:38vw;top:42%;width:min(20vw,300px);aspect-ratio:3/4;
+  border-radius:16px;will-change:transform,filter}
+.story-card{overflow:hidden;border:2px solid rgba(255,255,255,.92);box-shadow:0 30px 70px rgba(0,0,0,.5)}
 .story-card img{width:100%;height:100%;object-fit:cover}
 .story-card b{position:absolute;left:16px;bottom:14px;color:#fff;font-size:10px;letter-spacing:.3em;text-transform:uppercase;
   text-shadow:0 2px 12px rgba(0,0,0,.8);font-weight:600}
-.story-slot{flex:0 0 auto;width:min(26vw,330px);aspect-ratio:3/4;border-radius:16px}
 
 /* ---------- marquee ---------- */
 .marquee{overflow:hidden;border-block:1px solid var(--line);padding:18px 0;background:var(--wine)}
@@ -169,7 +150,7 @@ h2{font-family:var(--serif);font-weight:500;font-size:clamp(38px,5vw,72px);line-
 .card .meta .no{color:#7d6f6d;text-decoration:line-through}
 @media(max-width:980px){.grid{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:620px){.grid{grid-template-columns:1fr}.links a:not(.btn-accent){display:none}#nav{padding:14px 22px}
-  .story-card,.story-slot{width:64vw}.orbit{display:none}}
+  .story-card,.story-slot{width:62vw;left:56vw}.story-info{max-width:70vw}}
 
 /* ---------- about / commission / footer ---------- */
 .about{padding:150px 6vw;border-top:1px solid var(--line);background:linear-gradient(180deg,var(--char2),var(--char))}
@@ -207,10 +188,7 @@ footer a:hover{color:var(--camel)}
   width:48px;height:48px;font-size:16px;cursor:pointer;transition:border-color .3s,color .3s}
 .lb-close:hover{border-color:var(--camel);color:var(--camel)}
 
-.cursor{position:fixed;z-index:80;left:0;top:0;width:42px;height:42px;border:1px solid currentColor;
-  border-radius:50%;display:none;align-items:center;justify-content:center;pointer-events:none;
-  color:var(--cream);mix-blend-mode:difference;font-size:14px}
-@media (pointer:fine){.cursor{display:flex}}
+
 
 @media (prefers-reduced-motion: reduce){
   html{scroll-behavior:auto}

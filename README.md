@@ -19,17 +19,18 @@ index.html            root redirect -> site/index.html
 
 Experience, top to bottom:
 
-- **Realistic brush loader** — a hand-built brush (wood / ferrule / bristle gradients)
-  descends and writes "Art by" then "Dana Habayeb" in script, choreographed after the
-  `loading.mp4` reference clip; the curtain lifts only once the writing is done **and**
-  the hero images are decoded, so the hero never pops in afterwards.
+- **Typewriter loader** — types "Art by" then "Dana Habayeb" with a blinking caret;
+  the curtain lifts only once typing is done **and** the hero images are decoded,
+  so the hero never pops in afterwards.
 - **Editorial scattered-art hero** — cream canvas, her 15 artworks floating as
   white-framed cards in the layout traced from the reference recording, big serif
   statement "Art That Tells / A Story", rust scribble draw-in, rotating orbit badge,
   mouse-depth parallax, star cursor.
-- **Second section — pinned story cards** — 430 vh of scroll drive a horizontal row of
-  tilted, white-bordered story cards over a ghost statement; the bottom-left panel swaps
-  title + story per active card.
+- **Second section — pinned story cards** — one card per scroll step, traced from the
+  reference: the active card stands upright at the focus point while the next waits
+  tilted right and the previous exits up-left, dimmed; the left panel swaps title +
+  story per card, and the background fades from near-black to #6D88A4 once the first
+  card is placed.
 - **Traveling artwork** — *Pali Pika* leaves its hero slot, flies into the first story-card
   slot, rides the horizontal drift, then lands on its own tile in the Collection
   (coffee-cup style hand-off between sections).

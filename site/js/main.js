@@ -1,4 +1,4 @@
-/* Dana Habayeb — main.js : loader video, scattered hero, traveling artwork, pinned story cards */
+/* Dana Habayeb — main.js : typewriter loader, scattered hero, one-by-one story cards, traveling artwork */
 "use strict";
 const $ = (s, c = document) => c.querySelector(s);
 const $$ = (s, c = document) => [...c.querySelectorAll(s)];
@@ -7,23 +7,20 @@ const ease = t => t * t * (3 - 2 * t);
 const lerp = (a, b, t) => a + (b - a) * t;
 const byTitle = t => ART.find(a => a.t === t);
 
-/* ---------- realistic brush loader, choreographed after the reference clip ----------
-   descend -> write "Art by" -> carry -> write "Dana Habayeb" -> lift.
-   The curtain only lifts once the writing is done AND the hero images are decoded,
-   so the hero never pops in after the loader. */
+/* ---------- typewriter loader: "Art by" / "Dana Habayeb", hero images decode meanwhile ---------- */
 let heroImgsReady = false;
 (function () {
   const loader = $("#loader");
   if (!loader) return;
-  const brush = $("#ldBrush"), shadow = $("#ldShadow"), t1 = $("#ldT1"), t2 = $("#ldT2");
-  const stage = $(".ld-stage");
+  const s1 = $("#typeL1"), s2 = $("#typeL2"), c1 = $("#caret1"), c2 = $("#caret2");
+  const T1 = "Art by", T2 = "Dana Habayeb";
   let finished = false;
   const finish = () => {
     if (finished) return; finished = true;
     loader.classList.add("done");
     document.body.classList.add("loaded");
   };
-  setTimeout(finish, 14000);
+  setTimeout(finish, 12000);
 
   const imgs = $$("#scatter img");
   if (imgs.length) {
@@ -37,40 +34,16 @@ let heroImgsReady = false;
     if (finished) return;
     if (start === null) start = ts;
     const t = (ts - start) / 1000;
-    const S = stage.offsetWidth;
-    const w1 = t1.offsetWidth, w2 = t2.offsetWidth;
-    const a1 = (S - w1) / 2, a2 = (S - w2) / 2;
-    const y1 = t1.offsetTop + t1.offsetHeight * 0.92;
-    const y2 = t2.offsetTop + t2.offsetHeight * 0.92;
-    /* default = lifted-away end state (held while we wait for hero images) */
-    let bx = a2 + w2 + 12, by = y2 - 150, c1 = 1, c2 = 1, shO = 0, rot = 7, op = 0;
-    if (t < 0.5) {                 /* descend */
-      const q = ease(t / 0.5);
-      bx = a1; by = y1 - 150 * (1 - q); shO = .32 * q; op = q;
-    } else if (t < 1.7) {          /* write "Art by" */
-      const q = (t - 0.5) / 1.2;
-      c1 = q; bx = a1 + q * w1; by = y1 + Math.sin(q * 42) * 1.6; shO = .32;
-    } else if (t < 2.1) {          /* carry to the name */
-      const q = ease((t - 1.7) / 0.4);
-      c1 = 1; bx = lerp(a1 + w1, a2, q); by = lerp(y1, y2, q) - Math.sin(q * Math.PI) * 34;
-      shO = .32 - .2 * Math.sin(q * Math.PI);
-    } else if (t < 4.0) {          /* write "Dana Habayeb" */
-      const q = (t - 2.1) / 1.9;
-      c2 = q; bx = a2 + q * w2; by = y2 + Math.sin(q * 56) * 1.8; shO = .32;
-    } else if (t < 4.6) {          /* lift away */
-      const q = ease((t - 4.0) / 0.6);
-      c2 = 1; bx = a2 + w2 + 12 * q; by = y2 - 150 * q; shO = .32 * (1 - q); op = 1 - q;
-    } else if (heroImgsReady) { finish(); return; }
-    t1.style.clipPath = `inset(-30% ${(100 - c1 * 100).toFixed(1)}% -30% -5%)`;
-    t2.style.clipPath = `inset(-30% ${(100 - c2 * 100).toFixed(1)}% -30% -5%)`;
-    brush.style.opacity = op.toFixed(2);
-    brush.style.transform = `translate(${(bx - 32).toFixed(1)}px, ${(by - 200).toFixed(1)}px) rotate(${rot}deg)`;
-    shadow.style.opacity = shO.toFixed(2);
-    shadow.style.transform = `translate(${(bx - 37).toFixed(1)}px, ${(by - 6).toFixed(1)}px)`;
+    const n1 = Math.max(0, Math.min(T1.length, Math.floor((t - 0.35) / 0.09)));
+    const n2 = Math.max(0, Math.min(T2.length, Math.floor((t - 1.25) / 0.1)));
+    s1.textContent = T1.slice(0, n1);
+    s2.textContent = T2.slice(0, n2);
+    c1.classList.toggle("off", n2 > 0);
+    c2.classList.toggle("off", t < 1.15);
+    if (n2 === T2.length && t > 1.25 + T2.length * 0.1 + 0.55 && heroImgsReady) { finish(); return; }
     requestAnimationFrame(tick);
   }
-  const boot = () => requestAnimationFrame(tick);
-  (document.fonts && document.fonts.ready) ? document.fonts.ready.then(boot) : boot();
+  requestAnimationFrame(tick);
 })();
 
 /* ---------- nav / year ---------- */
@@ -110,13 +83,13 @@ let heroSlot = null;
   });
 })();
 
-/* ---------- second section: pinned, scroll-driven story cards ---------- */
+/* ---------- second section: pinned, one-by-one cards (traced frame-by-frame) ---------- */
 const STORIES = [
-  { a: TRAV, r: -6 },
-  { a: byTitle("Van Gogh Pikachu"), r: 5 },
-  { a: byTitle("There is Always Hope"), r: -4 },
-  { a: byTitle("The Source"), r: 6 },
-  { a: byTitle("Sheikh Pika"), r: -7 },
+  { a: TRAV },
+  { a: byTitle("Van Gogh Pikachu") },
+  { a: byTitle("There is Always Hope") },
+  { a: byTitle("The Source") },
+  { a: byTitle("Sheikh Pika") },
 ];
 const STORY_COPY = {
   "Pali Pika": "Pikachu rests under olive trees — a pop icon sitting quietly inside a homeland memory. Painted in dusty greens and mauve for everyone who carries a land they have never stopped missing.",
@@ -125,13 +98,24 @@ const STORY_COPY = {
   "The Source": "Where everything comes from and where it goes back to. Layer on layer of camel and wine, painted until the canvas holds its own gravity.",
   "Sheikh Pika": "Pika visits Dubai — keffiyeh, skyline and all. A love letter to the city she grows up in, painted with a straight face and a wink.",
 };
+/* choreography knots, keyed by d = cardIndex - progress (one card per scroll step):
+   active upright at focus; next waiting tilted right; previous exiting up-left dimmed */
+const K_X = [-26, -22, 0, 21, 40, 58];      /* vw */
+const K_Y = [-16, -12, 0, 3, 5, 6];         /* vh */
+const K_R = [-14, -12, 0, 10, 12, 13];      /* deg */
+const K_S = [0.84, 0.9, 1, 0.94, 0.9, 0.88];
+const K_B = [0.25, 0.4, 1, 0.55, 0.4, 0.3];
+function knot(arr, d) {
+  const x = Math.max(0, Math.min(arr.length - 1.001, d + 2));
+  const i = Math.floor(x), f = x - i;
+  return arr[i] + (arr[i + 1] - arr[i]) * f;
+}
 const storiesSec = $("#stories");
 const stack = $("#storyStack");
-const ghost = $("#ghostText");
 const infoBox = $(".story-info");
 const sTitle = $("#storyTitle");
 const sBody = $("#storyBody");
-let storySlot = null, travel = 0, activeStory = -1;
+let storySlot = null, activeStory = -1;
 (function buildStories() {
   if (!stack) return;
   STORIES.forEach((s, i) => {
@@ -143,7 +127,6 @@ let storySlot = null, travel = 0, activeStory = -1;
     }
     const c = document.createElement("figure");
     c.className = "story-card";
-    c.style.setProperty("--r", s.r + "deg");
     c.innerHTML = `<img src="../${s.a.f}" alt="${s.a.t}"><b>${s.a.t}</b>`;
     stack.appendChild(c);
   });
@@ -201,28 +184,20 @@ const io = new IntersectionObserver(es => es.forEach(en => {
 }), { threshold: 0.18 });
 $$(".reveal, .hall-item").forEach(el => io.observe(el));
 
-/* ---------- master motion loop: parallax, stories pin, traveling artwork, cursor ---------- */
+/* ---------- master motion loop ---------- */
 const traveler = $("#traveler");
-let travRot = 0, travScale = 1;
 const cards = scatter ? [...scatter.children] : [];
 let mx = 0, my = 0, cx = 0, cy = 0;
 addEventListener("mousemove", e => {
   mx = e.clientX / innerWidth - 0.5;
   my = e.clientY / innerHeight - 0.5;
 }, { passive: true });
-const cur = $("#cursor");
-let tx = innerWidth / 2, ty = innerHeight / 2, rxv = tx, ryv = ty;
-addEventListener("mousemove", e => { tx = e.clientX; ty = e.clientY; }, { passive: true });
 
-function measure() {
-  travel = Math.max(0, stack.scrollWidth - innerWidth * 0.94);
-}
-addEventListener("resize", measure);
-addEventListener("load", measure);
-measure();
+const hex = h => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)];
+const BG_A = hex("#0c0a09"), BG_B = hex("#6D88A4");
 
 (function frame() {
-  const vh = innerHeight;
+  const vh = innerHeight, vw = innerWidth;
 
   /* hero parallax */
   cx += (mx - cx) * 0.06; cy += (my - cy) * 0.06;
@@ -232,22 +207,28 @@ measure();
     c.style.setProperty("--py", (cy * d) + "px");
   });
 
-  /* stories pin */
+  /* stories: one card per scroll step, background fades to #6D88A4 once placed */
+  let pRaw = 0, stickyTop = 0;
   if (storiesSec && stack) {
     const r = storiesSec.getBoundingClientRect();
-    const p = clamp01(-r.top / (storiesSec.offsetHeight - vh));
-    stack.style.transform = `translateY(-50%) translate3d(${(-p * travel).toFixed(1)}px,0,0)`;
-    ghost.style.opacity = clamp01((p - 0.12) * 2.4).toFixed(2);
-    const focus = innerWidth * 0.32;
-    let best = 0, bd = 1e9;
-    [...stack.children].forEach((c, i) => {
-      const d = Math.abs(c.offsetLeft - p * travel + c.offsetWidth / 2 - focus);
-      if (d < bd) { bd = d; best = i; }
+    const H = storiesSec.offsetHeight;
+    pRaw = clamp01(-r.top / (H - vh)) * (STORIES.length - 1);
+    stickyTop = Math.min(Math.max(0, r.top), r.top + H - vh);
+    const mix = ease(clamp01((pRaw - 0.12) / 0.4));
+    storiesSec.style.backgroundColor = `rgb(${BG_A.map((v, i) => Math.round(lerp(v, BG_B[i], mix))).join(",")})`;
+    const kids = [...stack.children];
+    kids.forEach((el, i) => {
+      const d = i - pRaw;
+      const x = knot(K_X, d) * vw / 100;
+      const y = knot(K_Y, d) * vh / 100;
+      el.style.transform = `translate(-50%,-50%) translate(${x.toFixed(1)}px,${y.toFixed(1)}px) rotate(${knot(K_R, d).toFixed(2)}deg) scale(${knot(K_S, d).toFixed(3)})`;
+      el.style.filter = `brightness(${knot(K_B, d).toFixed(2)})`;
+      el.style.zIndex = d < -0.5 ? 2 : (d < 0.5 ? 6 : 5 - Math.min(3, Math.floor(d)));
     });
-    if (best !== activeStory) {
-      activeStory = best;
-      [...stack.children].forEach((c, i) => c.classList.toggle("active", i === best));
-      const t = STORIES[best].a.t;
+    const idx = Math.round(pRaw);
+    if (idx !== activeStory) {
+      activeStory = idx;
+      const t = STORIES[idx].a.t;
       sTitle.textContent = t;
       sBody.textContent = STORY_COPY[t];
       infoBox.classList.remove("swap");
@@ -256,31 +237,33 @@ measure();
     }
   }
 
-  /* traveling artwork: hero slot -> story slot -> its tile in the collection */
+  /* traveling artwork: hero slot -> first story card -> its tile in the collection */
   if (traveler && heroSlot && storySlot && travPh) {
     const r1 = heroSlot.getBoundingClientRect();
-    const r2 = storySlot.getBoundingClientRect();
     const r3 = travPh.getBoundingClientRect();
+    /* analytic rect of the (transformed) story slot */
+    const sw = storySlot.offsetWidth, sh = storySlot.offsetHeight;
+    const d0 = -pRaw;
+    const scx = storySlot.offsetLeft + knot(K_X, d0) * vw / 100;
+    const scy = stickyTop + storySlot.offsetTop + knot(K_Y, d0) * vh / 100;
+    const sw2 = sw * knot(K_S, d0), sh2 = sh * knot(K_S, d0);
+    const r2 = { left: scx - sw2 / 2, top: scy - sh2 / 2, width: sw2, height: sh2 };
     const p12 = ease(clamp01((vh - r2.top) / (vh * 0.6)));
     const p23 = ease(clamp01((vh * 1.05 - r3.top) / (vh * 0.75)));
-    travRot += ((activeStory === 0 ? 0 : STORIES[0].r) - travRot) * 0.1;
-    travScale += ((activeStory === 0 ? 1 : 0.9) - travScale) * 0.1;
     const x = lerp(lerp(r1.left, r2.left, p12), r3.left, p23);
     const y = lerp(lerp(r1.top, r2.top, p12), r3.top, p23);
-    const w = lerp(lerp(r1.width, r2.width * travScale, p12), r3.width, p23);
-    const h = lerp(lerp(r1.height, r2.height * travScale, p12), r3.height, p23);
-    const rot = lerp(lerp(0, travRot, p12), 0, p23);
+    const w = lerp(lerp(r1.width, r2.width, p12), r3.width, p23);
+    const h = lerp(lerp(r1.height, r2.height, p12), r3.height, p23);
+    const rot = lerp(lerp(0, knot(K_R, d0), p12), 0, p23);
+    const br = lerp(lerp(1, knot(K_B, d0), p12), 1, p23);
     const landed = p23 > 0.995;
     traveler.style.visibility = landed ? "hidden" : "visible";
     traveler.style.transform = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px) rotate(${rot.toFixed(2)}deg)`;
     traveler.style.width = w.toFixed(1) + "px";
     traveler.style.height = h.toFixed(1) + "px";
+    traveler.style.filter = `brightness(${br.toFixed(2)})`;
     travCard.classList.toggle("landed", landed);
   }
-
-  /* cursor */
-  rxv += (tx - rxv) * 0.18; ryv += (ty - ryv) * 0.18;
-  if (cur) cur.style.transform = `translate(${rxv - 21}px, ${ryv - 21}px)`;
 
   requestAnimationFrame(frame);
 })();
