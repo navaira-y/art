@@ -210,8 +210,8 @@ body.loaded .hero-cue{opacity:1}
 .hall-head h2{font-family:var(--serif);font-weight:400;font-size:clamp(26px,3.2vw,46px);
   line-height:1;letter-spacing:.005em}
 
-.ring-wrap{position:absolute;inset:0;perspective:1150px;perspective-origin:50% 41%;z-index:2}
-.ring{position:absolute;left:50%;top:41%;width:0;height:0;transform-style:preserve-3d;
+.ring-wrap{position:absolute;inset:0;perspective:1150px;perspective-origin:50% 42%;z-index:2}
+.ring{position:absolute;left:50%;top:42%;width:0;height:0;transform-style:preserve-3d;
   will-change:transform}
 .plate{position:absolute;left:0;top:0;margin:0;transform-style:preserve-3d;
   will-change:transform,opacity;backface-visibility:hidden;opacity:0;cursor:pointer}

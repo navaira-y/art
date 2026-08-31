@@ -327,7 +327,7 @@ function score() {
   PERSP = mobile ? 1150 : 1500;
   RING_R = mobile ? clamp(vw * 0.94, 330, 560) : clamp(vw * 0.92, 640, 1750);
   RING_STEP = mobile ? 38 : 34;
-  plateBase = (mobile ? 0.40 : 0.455) * vh;
+  plateBase = (mobile ? 0.40 : 0.43) * vh;
   ringWrap.style.perspective = PERSP + "px";
 
   plates.forEach(p => {
@@ -581,7 +581,7 @@ function hallPhase(ir) {
   const fp = plates[idx];
   echo.style.width = fp.rw + "px";
   echo.style.height = (fp.rh * .34) + "px";
-  echo.style.top = (0.41 * vh + fp.rh / 2 + 8) + "px";
+  echo.style.top = (0.42 * vh + fp.rh / 2 + 8) + "px";
   echo.style.opacity = (0.30 * clamp01(1 - Math.abs(frac) * 2.1) * easeOut(inn) * (1 - out)).toFixed(3);
 
   if (idx !== hallActive) {
