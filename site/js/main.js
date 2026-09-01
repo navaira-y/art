@@ -77,7 +77,7 @@ travCap.textContent = chapters[0].t;
 const travSlot = scatterCards.find(c => c.id === chapters[0].id) || null;
 let travOn = false;
 
-/* ── act III · the ring ── */
+/* ── act III · the gallery strip ── */
 const ring = $("#ring");
 const plates = ART.map(a => {
   const d = dimOf(artKey(a));
@@ -89,7 +89,9 @@ const plates = ART.map(a => {
   img.decoding = "async";
   const dim = document.createElement("span");
   dim.className = "dim";
-  fig.append(img, dim);
+  const cap = document.createElement("b");
+  cap.textContent = a.t;
+  fig.append(img, dim, cap);
   ring.appendChild(fig);
   return { el: fig, dim, ar: d.w / d.h, art: a };
 });
@@ -280,11 +282,11 @@ const veil = $("#veil"), redveil = $("#redveil");
 const hall = $("#hall"), echo = $("#echo"), echoImg = echo.querySelector("img");
 const hallCap = $("#hallCap"), hcNum = $("#hcNum"), hcTitle = $("#hcTitle"),
       hcLine = $("#hcLine"), hcMeta = $("#hcMeta"), hallLink = $("#hallLink"),
-      hallHead = $(".hall-head"), dialP = $("#dialP");
+      hallHead = $(".hall-head"), hallDots = $("#hallDots");
 const nav = $("#nav");
 const about = $("#about");
 const heroCentre = $(".hero-center"), heroCue = $(".hero-cue");
-const ringWrap = $(".ring-wrap"), dialEl = $(".dial");
+const ringWrap = $(".ring-wrap");
 const a2Total = $("#a2Meta .a2-idx i"), hcTotal = $(".hc-idx i");
 a2Total.textContent = "/ " + pad2(CHAPTERS.length);
 hcTotal.textContent = "/ " + pad2(ART.length);
@@ -295,7 +297,7 @@ let P = {};              /* phase boundaries, in vh units */
 let TOTAL = 0;
 let coverR = 0;          /* radius that just covers the viewport, px */
 let JT = 0, JSPAN = 1, ABT = 0;
-let RING_R = 0, PERSP = 1150, RING_STEP = 30, plateBase = 0;
+let PERSP = 1400, plateBase = 0, STEP_X = 0;
 
 function score() {
   vw = innerWidth; vh = innerHeight; vmax = Math.max(vw, vh);
@@ -343,17 +345,16 @@ function score() {
     c.dx = (x - 50) / 50; c.dy = (y - 50) / 50;
   }
 
-  PERSP = mobile ? 1150 : 1500;
-  RING_R = mobile ? clamp(vw * 0.94, 330, 560) : clamp(vw * 0.92, 640, 1750);
-  RING_STEP = mobile ? 38 : 34;
-  plateBase = (mobile ? 0.40 : 0.43) * vh;
+  PERSP = mobile ? 1100 : 1400;
+  plateBase = (mobile ? 0.48 : 0.52) * vh;
+  STEP_X = mobile ? vw * 0.60 : vw * 0.30;
   ringWrap.style.perspective = PERSP + "px";
 
   plates.forEach(p => {
     const f = clamp(Math.pow(p.art.hcm / 150, 0.30), .72, 1);
     let h = plateBase * f;
     let w = h * p.ar;
-    const maxW = (mobile ? 0.72 : 0.42) * vw;
+    const maxW = (mobile ? 0.78 : 0.36) * vw;
     if (w > maxW) { w = maxW; h = w / p.ar; }
     p.w = w; p.h = h;
     p.el.style.width = w + "px";
@@ -361,6 +362,18 @@ function score() {
     p.el.style.marginLeft = (-w / 2) + "px";
     p.el.style.marginTop = (-h / 2) + "px";
     p.rh = h; p.rw = w;                       /* focus sits at z = 0 */
+  });
+
+  /* pagination dots (scroll-driven progress, one per original) */
+  hallDots.innerHTML = "";
+  ART.forEach((a, i) => {
+    const d = document.createElement("i");
+    d.title = a.t;
+    d.addEventListener("click", () => {
+      const y = JT + (P.hall.a + i * HALL_STEP) / TOTAL * JSPAN;
+      scrollTo({ top: y, behavior: "smooth" });
+    });
+    hallDots.appendChild(d);
   });
 }
 
@@ -635,7 +648,7 @@ function iris(ir) {
   hall.style.opacity = "1";
 }
 
-/* ── ACT III · the circular hall ── */
+/* ── ACT III · the gallery strip — scroll-driven cover flow, light palette ── */
 function hallPhase(ir) {
   const inn = local("hallIn");
   const hp = local("hall");
@@ -648,37 +661,46 @@ function hallPhase(ir) {
   ring.dataset.on = "1";
   hall.style.pointerEvents = out > .9 ? "none" : "auto";
 
-  const entry = ir * inn;                      /* the room arrives with the iris */
-  const push = (1 - easeOut(clamp01(ir * 1.1))) * 620 + (1 - easeOut(inn)) * 380 + easeIn(out) * 640;
+  const push = (1 - easeOut(clamp01(ir * 1.1))) * 520 + (1 - easeOut(inn)) * 320 + easeIn(out) * 580;
   const gp = hp * (ART.length - 1);
 
+  /* the whole strip glides forward; scroll velocity gives it a soft tilt */
   ring.style.transform =
-    `translateZ(${(-push).toFixed(0)}px) rotateY(${(-sVel * 1.4).toFixed(2)}deg) rotateX(${(sVel * .35).toFixed(2)}deg)`;
+    `translateZ(${(-push).toFixed(0)}px) rotateY(${(-sVel * .9).toFixed(2)}deg)`;
+
+  const rot = mobile ? 42 : 48;                /* neighbour angle, deg */
+  const depth = mobile ? 260 : 420;            /* recession per step, px */
+  const maxV = mobile ? 2.1 : 2.6;             /* how many visible each side */
 
   for (let i = 0; i < plates.length; i++) {
     const p = plates[i];
-    const th = (i - gp) * RING_STEP;
-    const a = Math.abs(th) / RING_STEP;
-    if (a > 2.35) {
+    const n = i - gp;
+    const a = Math.abs(n);
+    if (a > maxV) {
       if (p.el.style.opacity !== "0") { p.el.style.opacity = "0"; p.el.style.visibility = "hidden"; }
       continue;
     }
+    const x = n * STEP_X;
+    const z = -Math.min(a * depth, 1800);
+    const ry = clamp(n * rot, -rot, rot);
+    const sc = 1 - Math.min(a * .05, .18);
     p.el.style.visibility = "";
     p.el.style.transform =
-      `translateZ(${(-RING_R).toFixed(0)}px) rotateY(${th.toFixed(2)}deg) translateZ(${RING_R.toFixed(0)}px)`;
-    p.el.style.opacity = (clamp01((2.35 - a) / .85) * (1 - easeIn(out) * .9)).toFixed(3);
-    p.dim.style.opacity = clamp(a * .34, 0, .76).toFixed(3);
+      `translate3d(${x.toFixed(1)}px,0,${z.toFixed(0)}px)` +
+      ` rotateY(${ry.toFixed(2)}deg) scale(${sc.toFixed(3)})`;
+    p.el.style.opacity = (clamp01((maxV - a) / .8) * (1 - easeIn(out) * .9)).toFixed(3);
+    p.dim.style.opacity = clamp(a * .22, 0, .5).toFixed(3);
     p.el.style.zIndex = String(40 - Math.round(a * 10));
   }
 
-  /* the reflection under the piece in focus */
+  /* soft reflection under the piece in focus */
   const idx = clamp(Math.round(gp), 0, ART.length - 1);
   const frac = gp - idx;
   const fp = plates[idx];
   echo.style.width = fp.rw + "px";
-  echo.style.height = (fp.rh * .34) + "px";
-  echo.style.top = (0.42 * vh + fp.rh / 2 + 8) + "px";
-  echo.style.opacity = (0.30 * clamp01(1 - Math.abs(frac) * 2.1) * easeOut(inn) * (1 - out)).toFixed(3);
+  echo.style.height = (fp.rh * .30) + "px";
+  echo.style.top = (0.44 * vh + fp.rh / 2 + 10) + "px";
+  echo.style.opacity = (0.22 * clamp01(1 - Math.abs(frac) * 2.1) * easeOut(inn) * (1 - out)).toFixed(3);
 
   if (idx !== hallActive) {
     hallActive = idx;
@@ -699,9 +721,10 @@ function hallPhase(ir) {
   hallCap.style.opacity = ui.toFixed(3);
   hallHead.style.opacity = ui.toFixed(3);
   hallLink.style.opacity = ui.toFixed(3);
+  hallDots.style.opacity = ui.toFixed(3);
   hallCap.style.transform = `translateX(-50%) translateY(${((1 - ui) * 26).toFixed(1)}px)`;
-  dialP.style.strokeDashoffset = (339.29 * (1 - hp)).toFixed(1);
-  dialEl.style.opacity = ui.toFixed(3);
+  for (let i = 0; i < hallDots.children.length; i++)
+    hallDots.children[i].classList.toggle("on", i === idx);
 }
 
 /* ── the red takes over ── */
@@ -713,9 +736,8 @@ function red() {
 /* ── chrome: nav colour, year ── */
 function chrome() {
   nav.classList.toggle("tight", scrollY > 60);
-  const inHall = u > P.iris.a + P.iris.l * .35 && u < P.red.a + P.red.l * .25;
   const inAbout = scrollY + 70 > ABT;
-  const dark = inHall || inAbout;
+  const dark = inAbout;                 /* the hall is light now — only About goes dark */
   if (dark !== navDark) { navDark = dark; nav.classList.toggle("on-dark", dark); }
 }
 
