@@ -448,6 +448,10 @@ function hero(dt) {
   const intro = introT0 ? clamp01((performance.now() - introT0) / 1700) : 0;
   const ie = easeOut(intro);
 
+  /* idle float: each artwork drifts on its own gentle cycle, so the hero
+     is alive without the mouse — the mouse parallax still layers on top */
+  const tnow = performance.now() * .001;
+
   for (const c of scatterCards) {
     const d = c.depth;
     const px = cx * d, py = cy * d;
@@ -457,9 +461,13 @@ function hero(dt) {
     const z = e * 340 * (0.5 + (c.i % 3) * .3);
     const rise = (1 - ie) * (26 + (c.i % 4) * 8);
     const sc = lerp(.86, 1, ie);
+    const fl = REDUCED ? 0 : 1;
+    const fx = fl * Math.sin(tnow * .55 + c.i * 1.9) * (3.5 + (c.i % 3) * 1.4);
+    const fy = fl * Math.cos(tnow * .42 + c.i * 2.3) * (4.5 + (c.i % 4) * 1.7);
+    const fr = fl * Math.sin(tnow * .31 + c.i * 1.15) * 1.1;
     c.el.style.transform =
-      `translate(-50%,-50%) translate3d(${(px + ox).toFixed(1)}px,${(py + oy + rise).toFixed(1)}px,${z.toFixed(0)}px)` +
-      ` rotate(${(c.tilt * ie + c.rot * e).toFixed(2)}deg) scale(${sc.toFixed(3)})`;
+      `translate(-50%,-50%) translate3d(${(px + ox + fx).toFixed(1)}px,${(py + oy + rise + fy).toFixed(1)}px,${z.toFixed(0)}px)` +
+      ` rotate(${(c.tilt * ie + c.rot * e + fr).toFixed(2)}deg) scale(${sc.toFixed(3)})`;
     c.el.style.opacity = (intro * (1 - clamp01((h - .55) / .4))).toFixed(3);
   }
   heroCue.style.opacity = (intro * (1 - clamp01(h * 4))).toFixed(2);
@@ -542,9 +550,10 @@ function actTwo(cCircle) {
 
 /* ── the first artwork leaves the hero and lands on the conveyor ── */
 function travelT() {
-  /* the lift starts while the hero is still on screen and finishes at the
-     same moment the first card reaches its focus position (u = U0) */
-  const S0 = JT - vh * .75;
+  /* the first print leaves its low hero slot with the very first touch of
+     scroll and lands on the conveyor just as the second section arrives,
+     so it is in motion (and clearly visible) from the tiniest scroll */
+  const S0 = Math.min(0, JT - vh);                 /* top of the page → t = 0 */
   const S1 = JT + (U0 / 100) * vh;
   return clamp01((scrollY - S0) / Math.max(1, S1 - S0));
 }
@@ -553,7 +562,9 @@ function flyTraveler() {
   if (t <= 0 || t >= 1) { hideTraveler(t <= 0); return; }
   if (travSlot) travSlot.el.style.opacity = "0";   /* it left the collage */
 
-  const e = easeInOut(t);
+  /* soft ease-out: springs into motion on the smallest scroll, glides
+     down the frame and settles onto the conveyor without a jump */
+  const e = 1 - (1 - t) * (1 - t);
   const r1 = travSlot ? travSlot.el.getBoundingClientRect()
                       : { left: vw / 2, top: vh * .2, width: 140, height: 180 };
   /* land on card 1's live rect — wherever the conveyor puts it, the

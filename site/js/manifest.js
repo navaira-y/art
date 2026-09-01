@@ -34,6 +34,18 @@ const MANIFEST = [
   ["assets/fx/splash-a.webp",77644,1000,545],
   ["assets/fx/splash-b.webp",70456,1000,501],
   ["assets/fx/splash-c.webp",60102,1000,628],
-  ["assets/fx/splash-d.webp",44894,1000,537]
+  ["assets/fx/splash-d.webp",44894,1000,537],
+  ['assets/art/mini-sheikh-pika-print-s.webp',45482,380,380],
+  ['assets/art/mini-sheikh-pika-print.webp',278246,1120,1120],
+  ['assets/art/monkey-d-luffy-print-s.webp',32692,305,380],
+  ['assets/art/monkey-d-luffy-print.webp',185310,898,1120],
+  ['assets/art/dxb-pika-print-s.webp',30146,289,380],
+  ['assets/art/dxb-pika-print.webp',180300,852,1120],
+  ['assets/art/from-the-land-print-s.webp',36314,297,380],
+  ['assets/art/from-the-land-print.webp',250316,876,1120],
+  ['assets/art/this-is-always-hope-print-s.webp',29718,380,252],
+  ['assets/art/this-is-always-hope-print.webp',125918,1120,743],
+  ['assets/art/van-gogh-pikachu-print-s.webp',17374,314,380],
+  ['assets/art/van-gogh-pikachu-print.webp',61774,637,771]
 ];
-const MANIFEST_BYTES = 3065312;
+const MANIFEST_BYTES = 4338902;

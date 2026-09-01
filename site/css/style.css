@@ -147,7 +147,7 @@ body.loaded .hero-cue{opacity:1}
 /* ── ACT II — artworks travelling through the frame ── */
 .act2{background:var(--cream);z-index:2;will-change:transform,opacity}
 .a2-plate{position:absolute;inset:0;perspective:1250px;perspective-origin:52% 46%}
-.a2-word{position:absolute;left:50%;top:47%;width:190vw;text-align:center;
+.a2-word{display:none;position:absolute;left:50%;top:47%;width:190vw;text-align:center;
   transform:translate(-50%,-50%);font-family:var(--serif);font-weight:400;font-style:italic;
   font-size:clamp(64px,13.5vw,230px);line-height:.86;letter-spacing:-.02em;color:var(--ink);
   opacity:.11;white-space:nowrap;pointer-events:none;will-change:transform}

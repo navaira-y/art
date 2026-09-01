@@ -80,16 +80,44 @@ const ART = [
     dim: "46 × 46 cm", hcm: 46, p: 1850, sold: 1, u: "/products/desert-dune-bashing" },
 ];
 
-const BY_ID = Object.fromEntries(ART.map(a => [a.id, a]));
+/* the six limited edition prints (danahabayeb.art/collections/limited-edition-prints)
+   they travel through the second act, in the collection's featured order   */
+const PRINTS = [
+  { id: "mini-sheikh-pika-print", t: "Mini Sheikh Pika (Print)",
+    cap: "Limited edition print — the sheikh of all Pikas, one metre of straight faced ceremony.",
+    dim: "Limited edition giclée print", hcm: 42, p: 275, sold: 0,
+    u: "/products/mini-sheikh-pika-1" },
 
-/* the five works that travel through the second act, in order */
-const CHAPTERS = [
-  "pali-pika",
-  "there-is-always-hope",
-  "the-source",
-  "van-gogh-pikachu",
-  "this-is-your-god",
+  { id: "monkey-d-luffy-print", t: "Monkey D. Luffy (Print)",
+    cap: "Limited edition print — gear five awake inside a starry night.",
+    dim: "Limited edition giclée print", hcm: 42, p: 275, sold: 0,
+    u: "/products/monkey-d-luffy" },
+
+  { id: "dxb-pika-print", t: "DXB Pika (Print)",
+    cap: "Limited edition print — Pikachu in kandura, under a swirling Emirati night.",
+    dim: "Limited edition giclée print", hcm: 42, p: 275, sold: 0,
+    u: "/products/dxb-pika-print" },
+
+  { id: "from-the-land-print", t: "From the Land (Print)",
+    cap: "Limited edition print — a girl, a watermelon, and the pattern of a land she keeps wearing.",
+    dim: "Limited edition giclée print", hcm: 42, p: 275, sold: 0,
+    u: "/products/from-the-land-print" },
+
+  { id: "this-is-always-hope-print", t: "This is Always Hope (Print)",
+    cap: "Limited edition print — Banksy's girl with the balloon leads KAWS to a free Palestine behind the wall.",
+    dim: "Limited edition giclée print", hcm: 42, p: 795, sold: 0,
+    u: "/products/this-is-always-hope-print" },
+
+  { id: "van-gogh-pikachu-print", t: "Van Gogh Pikachu (Print)",
+    cap: "Limited edition print — a self portrait of Pikachu x Van Gogh.",
+    dim: "Limited edition giclée print", hcm: 42, p: 275, sold: 0,
+    u: "/products/van-gogh-pikachu-print" },
 ];
+
+const BY_ID = Object.fromEntries([...ART, ...PRINTS].map(a => [a.id, a]));
+
+/* the six works that travel through the second act, in order */
+const CHAPTERS = PRINTS.map(p => p.id);
 
 /* hero scatter: [left %, top %, width px, depth] — traced from the reference */
 /* [id, left %, top %, width in vw (clamped in css), parallax depth] */
@@ -98,7 +126,7 @@ const SCATTER = [
   ["this-is-your-god",     24.0,  8,  9.0, 14],
   ["do-you-have-no-shame", 46.0,  6,  9.8, 20],
   ["the-world-is-watching",68.0, 11,  9.0, 32],
-  ["pali-pika",            93.0, 22, 10.4, 18],
+  ["mini-sheikh-pika-print", 86.0, 66, 10.4, 18],
   ["the-source",            7.0, 40,  7.6, 30],
   ["from-the-land",        14.0, 74,  8.6, 12],
   ["van-gogh-pikachu",     89.0, 44,  9.2, 24],
@@ -118,7 +146,7 @@ const SCATTER_M = {
   "this-is-your-god":     [35,  4, 17],
   "do-you-have-no-shame": [62,  9, 20],
   "the-world-is-watching":[89, 15, 19],
-  "pali-pika":            [ 7, 25, 16],
+  "mini-sheikh-pika-print": [ 10, 70, 15],
   "the-source":           [92, 34, 17],
   "from-the-land":        [ 6, 71, 18],
   "van-gogh-pikachu":     [27, 75, 16],
