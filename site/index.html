@@ -17,7 +17,10 @@
 <!-- ─────────────────────────  LOADING SCREEN  ───────────────────────── -->
 <div id="loader" role="status" aria-live="polite">
   <div class="ld-inner">
-    <p class="ld-mark"><span id="ldType"></span><i class="ld-caret" id="ldCaret"></i></p>
+    <p class="ld-mark" aria-label="Art by Dana Habayeb">
+      <span class="ld-line ld-by"><span id="ldBy"></span><i class="ld-caret" id="ldCaretBy"></i></span>
+      <span class="ld-line ld-name"><span id="ldType"></span><i class="ld-caret" id="ldCaret"></i></span>
+    </p>
     <div class="ld-bar"><span id="ldFill"></span></div>
     <div class="ld-foot">
       <span class="ld-note" id="ldNote">Loading the collection</span>
@@ -27,6 +30,9 @@
 </div>
 
 <div class="grain" aria-hidden="true"></div>
+
+<!-- the first artwork: leaves the hero collage and lands in the second section -->
+<figure class="traveler" id="traveler" aria-hidden="true"><img alt=""><b></b></figure>
 
 <header id="nav">
   <a class="brand" href="#top" data-jump="top"><span>Dana Habayeb</span></a>

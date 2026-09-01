@@ -45,7 +45,7 @@ const scatterCards = SCATTER.map(([id, x, y, w, depth], i) => {
   scatter.appendChild(f);
   const m = SCATTER_M[id] || [x, y, w];
   const tilt = [-4.5, 3.2, -2.1, 5.4, -6.2, 2.6, -3.4, 4.8, -1.6, 6.1, -5.2, 2.2, -3.8, 4.2, -2.6][i] || 0;
-  return { el: f, depth, tilt, d: [x, y, w], m, dx: 0, dy: 0,
+  return { id, el: f, depth, tilt, d: [x, y, w], m, dx: 0, dy: 0,
            rot: (i % 2 ? 1 : -1) * (5 + (i % 5) * 2), i };
 });
 
@@ -67,6 +67,15 @@ const cardEls = chapters.map(a => {
   a2Cards.appendChild(fig);
   return fig;
 });
+
+/* ── the first artwork: carried out of the hero, lands as the first card ── */
+const traveler = $("#traveler");
+const travImg = traveler.querySelector("img");
+const travCap = traveler.querySelector("b");
+travImg.dataset.k = artKey(chapters[0]);
+travCap.textContent = chapters[0].t;
+const travSlot = scatterCards.find(c => c.id === chapters[0].id) || null;
+let travOn = false;
 
 /* ── act III · the ring ── */
 const ring = $("#ring");
@@ -112,21 +121,30 @@ const OBJ = Object.create(null);
 const loader = $("#loader");
 const ldFill = $("#ldFill"), ldPct = $("#ldPct"), ldNote = $("#ldNote");
 const ldType = $("#ldType"), ldCaret = $("#ldCaret");
+const ldBy = $("#ldBy"), ldCaretBy = $("#ldCaretBy");
 
 let realP = 0;          /* the truth */
 let shownP = 0;         /* the eased number on screen */
 let loadDone = false;
+let typeDone = false;   /* both loader lines fully typed */
 
-/* typewriter runs alongside the download, it never gates the reveal */
+/* typewriter runs alongside the download, it never gates the reveal —
+   but it always finishes its two lines before the loader is allowed out */
 (function typewriter() {
-  const T = "Dana Habayeb";
+  const T1 = "Art by", T2 = "Dana Habayeb";
   const t0 = performance.now();
-  (function step(now) {
+  const step = 0.088, gap = 0.42;
+  (function tick(now) {
     const t = (now - t0) / 1000;
-    const n = clamp(Math.floor((t - 0.25) / 0.075), 0, T.length);
-    ldType.textContent = T.slice(0, n);
-    if (n >= T.length) ldCaret.classList.add("off");
-    if (!loadDone) requestAnimationFrame(step);
+    const n1 = clamp(Math.floor((t - 0.25) / step), 0, T1.length);
+    const start2 = 0.25 + T1.length * step + gap;
+    const n2 = clamp(Math.floor((t - start2) / 0.078), 0, T2.length);
+    ldBy.textContent = T1.slice(0, n1);
+    ldType.textContent = T2.slice(0, n2);
+    ldCaretBy.classList.toggle("off", n1 >= T1.length || n2 > 0);
+    ldCaret.classList.toggle("off", n2 < 1 || n2 >= T2.length);
+    if (n1 >= T1.length && n2 >= T2.length) typeDone = true;
+    if (!typeDone) requestAnimationFrame(tick);
   })(t0);
 })();
 
@@ -236,7 +254,7 @@ function reveal() {
   if (loadDone) return;
   loadDone = true;
   const wait = () => {
-    if (shownP < 0.999) return requestAnimationFrame(wait);
+    if (shownP < 0.999 || !typeDone) return requestAnimationFrame(wait);
     ldNote.textContent = "Ready";
     setTimeout(() => {
       loader.classList.add("out");
@@ -272,7 +290,7 @@ a2Total.textContent = "/ " + pad2(CHAPTERS.length);
 hcTotal.textContent = "/ " + pad2(ART.length);
 
 let vw = 0, vh = 0, vmax = 0, mobile = false;
-let CARD_STEP, CARDS_LEN, CIRCLE, PAINTP, IRIS, HALL_IN, HALL_STEP, HALL_LEN, HALL_OUT, RED;
+let CARD_STEP, U0, CARDS_LEN, CIRCLE, PAINTP, IRIS, HALL_IN, HALL_STEP, HALL_LEN, HALL_OUT, RED;
 let P = {};              /* phase boundaries, in vh units */
 let TOTAL = 0;
 let coverR = 0;          /* radius that just covers the viewport, px */
@@ -285,7 +303,8 @@ function score() {
   const k = REDUCED ? 0.45 : (mobile ? 0.74 : 1);
 
   CARD_STEP = 70 * k;
-  CARDS_LEN = CARD_STEP * (chapters.length + 0.35);   /* lead in, last card holds */
+  U0 = CARD_STEP * 0.35;                              /* hero release → first card lands */
+  CARDS_LEN = U0 + CARD_STEP * (chapters.length - 1 + 1.15);  /* lead in + last card holds */
   CIRCLE  = 92 * k;
   PAINTP  = 155 * k;
   IRIS    = 86 * k;
@@ -348,14 +367,19 @@ function score() {
 /* ══════════════════════════════════════════════════════════════════
    4 · MOTION
    ══════════════════════════════════════════════════════════════════ */
-/* card path keyframes, keyed on q = cardIndex - progress */
-const KQ = [-1.35, -1, -0.5, 0, 0.5, 1, 1.35];
-const KX = [64, 47, 22, 0, -27, -62, -90];        /* vw   */
-const KY = [23, 17, 7, 0, -9, -21, -32];          /* vh   */
-const KZ = [-1600, -1050, -430, 0, 310, 720, 980];/* px   */
-const KRY = [36, 29, 15, 0, -13, -24, -30];       /* deg  */
-const KRZ = [11, 8, 4, 0, -4, -9, -12];           /* deg  */
-const KOP = [0, .5, 1, 1, 1, .62, 0];
+/* lateral conveyor keyframes, keyed on q = cardIndex - progress
+   q = 0   the card in focus — dead centre, upright, full light
+   q < 0   queued — waiting fanned off to the lower-right, dimmed
+   q > 0   passed — lifting up-left, counter-rotated, dimmed, softened
+   (measured frame by frame from the reference recording)                */
+const KQ = [-3, -2, -1, 0, 1, 2, 3];
+const KX = [ 77,  54,  31, .2, -28, -52, -76];  /* vw   */
+const KY = [ 21,  17,  13, .2, -14, -30, -46];  /* vh   */
+const KR = [ 24,  18,  10,  0, -10, -16, -20];  /* deg  */
+const KS = [ .84, .90, .96, 1, .95, .88, .82];  /* scale */
+const KO = [  0,  .9, .97, 1,  1,  .5,   0];    /* opacity */
+const KB = [ .22, .34, .50, 1, .55, .30, .16];  /* brightness */
+const KBL = [  3,   2,   1,  0, 1.5,   3,   5]; /* blur px */
 function kf(arr, q) {
   if (q <= KQ[0]) return arr[0];
   if (q >= KQ[KQ.length - 1]) return arr[arr.length - 1];
@@ -399,6 +423,7 @@ function frame(now) {
   const cPaint = local("paint");
   const cIris = local("iris");
   actTwo(cCircle);
+  flyTraveler();
   circle(cCircle);
   paintPhase(cPaint, cIris);
   iris(cIris);
@@ -440,35 +465,55 @@ function hero(dt) {
   heroCue.style.opacity = (intro * (1 - clamp01(h * 4))).toFixed(2);
 }
 
-/* ── ACT II ── */
+/* ── ACT II · the lateral conveyor ── */
 function actTwo(cCircle) {
   const covered = cCircle >= 0.999;
   if (covered) {
     if (act2.style.visibility !== "hidden") act2.style.visibility = "hidden";
+    hideTraveler();
     return;
   }
   if (act2.style.visibility === "hidden") act2.style.visibility = "";
 
   const n = chapters.length;
-  const cp = Math.min(u / CARD_STEP - 1.35, n - 1);          /* the last one holds */
-  const hold = clamp01((u - CARDS_LEN) / CARD_STEP);         /* it leans in as the portal opens */
+  const cp = clamp((u - U0) / CARD_STEP, 0, n - 1);          /* the last one holds */
+  const hold = clamp01((u - U0 - CARD_STEP * (n - 1)) / CARD_STEP);
+  const flying = travelT() < 1;                             /* hero release still in flight */
+  /* closing beat: the last card rises to the top of the frame and the
+     paintings behind it settle up-left and fall back into the dark —
+     it stays there while the section hands over to the portal            */
+  const liftLast = hold * 24.3;                              /* vh, last card */
+  const liftPast = hold * 10.2;                              /* vh, passed cards */
 
   for (let i = 0; i < n; i++) {
     const el = cardEls[i];
-    const q = cp - i - sVel * .06;
+    let q = cp - i;
+    q -= sVel * .08;
     if (q < KQ[0] || q > KQ[KQ.length - 1]) {
       if (el.style.opacity !== "0") { el.style.opacity = "0"; el.style.visibility = "hidden"; }
       continue;
     }
     el.style.visibility = "";
     const x = kf(KX, q) * vw / 100;
-    const y = kf(KY, q) * vh / 100;
-    const z = kf(KZ, q) + (i === n - 1 ? hold * 150 : 0);
+    let y = kf(KY, q) * vh / 100;
+    let op = kf(KO, q);
+    let b = kf(KB, q), bl = kf(KBL, q);
+    if (i === n - 1) {
+      y -= liftLast * vh / 100;                             /* final rise */
+      b += hold * .10;                                      /* stays in the light */
+    } else if (q > 0 && op > 0) {
+      y -= liftPast * vh / 100;                             /* lingers up-left */
+      b -= hold * .28; bl += hold * 1.5;
+    }
+    const s = kf(KS, q);
     el.style.transform =
-      `translate(-50%,-50%) translate3d(${x.toFixed(1)}px,${y.toFixed(1)}px,${z.toFixed(0)}px)` +
-      ` rotateY(${kf(KRY, q).toFixed(2)}deg) rotateZ(${kf(KRZ, q).toFixed(2)}deg)`;
-    el.style.opacity = kf(KOP, q).toFixed(3);
-    el.style.zIndex = String(50 + Math.round(z / 20));
+      `translate(-50%,-50%) translate(${x.toFixed(1)}px,${y.toFixed(1)}px)` +
+      ` rotate(${kf(KR, q).toFixed(2)}deg) scale(${s.toFixed(3)})`;
+    /* while the traveler still carries the first artwork, card 1 stays
+       invisible but keeps its focus transform, so the handoff is exact */
+    el.style.opacity = (flying && i === 0 ? 0 : op).toFixed(3);
+    el.style.filter = `brightness(${b.toFixed(3)}) blur(${bl.toFixed(2)}px)`;
+    el.style.zIndex = String(60 - Math.round(Math.abs(q) * 8));
   }
 
   /* the oversized title drifts against the card it belongs to */
@@ -476,7 +521,8 @@ function actTwo(cCircle) {
   const frac = cp - idx;
   a2Word.style.transform =
     `translate(-50%,-50%) translate3d(${(-frac * vw * .30).toFixed(1)}px,${(frac * -3).toFixed(1)}px,0)`;
-  a2Word.style.opacity = (0.12 * clamp01(1 - Math.abs(frac) * 1.7)).toFixed(3);
+  a2Word.style.opacity =
+    (0.12 * clamp01(1 - Math.abs(frac) * 1.7) + (idx === n - 1 ? hold * .16 : 0)).toFixed(3);
 
   if (idx !== a2Active) {
     a2Active = idx;
@@ -492,6 +538,45 @@ function actTwo(cCircle) {
   a2Plate.style.transform = `scale(${(1 - r * .05).toFixed(4)})`;
   a2Meta.style.opacity = (1 - clamp01(cCircle * 2.6)).toFixed(3);
   a2Scrim.style.opacity = r.toFixed(3);
+}
+
+/* ── the first artwork leaves the hero and lands on the conveyor ── */
+function travelT() {
+  /* the lift starts while the hero is still on screen and finishes at the
+     same moment the first card reaches its focus position (u = U0) */
+  const S0 = JT - vh * .75;
+  const S1 = JT + (U0 / 100) * vh;
+  return clamp01((scrollY - S0) / Math.max(1, S1 - S0));
+}
+function flyTraveler() {
+  const t = travelT();
+  if (t <= 0 || t >= 1) { hideTraveler(t <= 0); return; }
+  if (travSlot) travSlot.el.style.opacity = "0";   /* it left the collage */
+
+  const e = easeInOut(t);
+  const r1 = travSlot ? travSlot.el.getBoundingClientRect()
+                      : { left: vw / 2, top: vh * .2, width: 140, height: 180 };
+  /* land on card 1's live rect — wherever the conveyor puts it, the
+     handoff is exact (at u = U0 the card sits at focus, opacity 1) */
+  const r2 = cardEls[0].getBoundingClientRect();
+  const left = lerp(r1.left, r2.left, e);
+  const top  = lerp(r1.top,  r2.top, e);
+  const w    = lerp(r1.width, r2.width, e);
+  const h    = lerp(r1.height, r2.height, e);
+  const rot  = lerp(travSlot ? travSlot.tilt : 0, 0, e);
+  traveler.style.visibility = "visible";
+  traveler.style.opacity = "1";
+  traveler.style.width = w.toFixed(1) + "px";
+  traveler.style.height = h.toFixed(1) + "px";
+  traveler.style.transform =
+    `translate(${left.toFixed(1)}px,${top.toFixed(1)}px) rotate(${rot.toFixed(2)}deg)`;
+}
+function hideTraveler(backHome) {
+  if (!travOn && traveler.style.visibility === "hidden") return;
+  travOn = false;
+  traveler.style.visibility = "hidden";
+  traveler.style.opacity = "0";
+  if (backHome && travSlot) travSlot.el.style.opacity = "";
 }
 
 /* ── the beige circle ── */

@@ -66,8 +66,11 @@ a{color:inherit;text-decoration:none}
 #loader.out{opacity:0;transition:opacity .8s cubic-bezier(.4,0,.2,1);pointer-events:none}
 #loader.gone{display:none}
 .ld-inner{width:min(560px,100%);text-align:left}
-.ld-mark{font-family:var(--script);font-size:clamp(34px,6vw,58px);color:var(--ink);
-  line-height:1.25;margin-bottom:clamp(28px,5vh,48px);min-height:1.3em}
+.ld-mark{font-family:var(--script);color:var(--ink);line-height:1.25;margin-bottom:clamp(28px,5vh,48px)}
+.ld-mark .ld-line{display:block;min-height:1.25em}
+.ld-by{font-size:clamp(19px,2.9vw,29px);color:var(--ink-soft);
+  letter-spacing:.06em;margin-bottom:clamp(6px,1.4vh,14px)}
+.ld-name{font-size:clamp(34px,6vw,58px)}
 .ld-caret{display:inline-block;width:2px;height:.78em;background:var(--rust);margin-left:6px;
   vertical-align:-.06em;animation:blink .8s steps(1) infinite}
 .ld-caret.off{opacity:0;animation:none}
@@ -148,13 +151,23 @@ body.loaded .hero-cue{opacity:1}
   transform:translate(-50%,-50%);font-family:var(--serif);font-weight:400;font-style:italic;
   font-size:clamp(64px,13.5vw,230px);line-height:.86;letter-spacing:-.02em;color:var(--ink);
   opacity:.11;white-space:nowrap;pointer-events:none;will-change:transform}
-.a2-cards{position:absolute;inset:0;transform-style:preserve-3d;
-  --cw:min(29vw,392px)}
+.a2-cards{position:absolute;inset:0;
+  --cw:min(27vw,392px)}
 .a2-card{position:absolute;left:50%;top:50%;margin:0;width:var(--cw);opacity:0;
   background:#fff;padding:9px 9px 9px;box-shadow:0 20px 34px rgba(33,31,29,.26);
-  transform-style:preserve-3d;will-change:transform,opacity;backface-visibility:hidden}
+  will-change:transform,opacity,filter;backface-visibility:hidden}
 .a2-card img{width:100%;aspect-ratio:var(--ar,.8);object-fit:cover}
 .a2-card b{display:block;font-size:9px;letter-spacing:.3em;text-transform:uppercase;
+  color:var(--ink-soft);font-weight:500;padding:10px 2px 2px}
+
+/* the first artwork shadowing the hero collage on its way into the stage */
+.traveler{position:fixed;left:0;top:0;margin:0;z-index:40;pointer-events:none;
+  background:#fff;padding:9px;box-shadow:0 20px 34px rgba(33,31,29,.26);
+  display:flex;flex-direction:column;overflow:hidden;
+  opacity:0;visibility:hidden;transform-origin:50% 50%;
+  will-change:transform,width,height,opacity,filter}
+.traveler img{flex:1 1 auto;min-height:0;width:100%;object-fit:cover;display:block}
+.traveler b{flex:0 0 auto;font-size:9px;letter-spacing:.3em;text-transform:uppercase;
   color:var(--ink-soft);font-weight:500;padding:10px 2px 2px}
 .a2-meta{position:absolute;left:clamp(20px,4vw,52px);bottom:clamp(30px,7vh,66px);
   max-width:min(330px,42vw);z-index:4}
